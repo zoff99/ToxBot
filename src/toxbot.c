@@ -620,7 +620,7 @@ int main(int argc, char **argv)
 	create_default_group(m);
 
 	uint64_t cur_time = (uint64_t) time(NULL);
-    uint64_t last_friend_purge = 0;
+    uint64_t last_friend_purge = cur_time;
     uint64_t last_group_purge = cur_time;
 
     while (!FLAG_EXIT)
