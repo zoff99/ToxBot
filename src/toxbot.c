@@ -1,3 +1,12 @@
+/*
+ *
+ *
+ * skupina robot
+ *
+ * Copyright (C) 2017 by Zoff
+ *
+ */
+
 /*  toxbot.c
  *
  *
