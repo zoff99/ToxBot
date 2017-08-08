@@ -88,7 +88,8 @@ static void exit_groupchats(Tox *m, size_t numchats)
 
     size_t i;
 
-    for (i = 0; i < numchats; ++i) {
+    for (i = 0; i < numchats; ++i)
+	{
         tox_conference_delete(m, chatlist[i], NULL);
     }
 }
@@ -97,7 +98,8 @@ static void exit_toxbot(Tox *m)
 {
     size_t numchats = tox_conference_get_chatlist_size(m);
 
-    if (numchats) {
+    if (numchats)
+	{
         exit_groupchats(m, numchats);
     }
 
@@ -209,12 +211,9 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
-void autoinvite_friendkey_to_default_group(Tox *m, const uint8_t *public_key)
-{
-}
-
 void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber)
 {
+	cmd_invite(m, friendnumber, 0, NULL);
 }
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
@@ -225,12 +224,16 @@ static void cb_friend_request(Tox *m, const uint8_t *public_key, const uint8_t *
                               void *userdata)
 {
     TOX_ERR_FRIEND_ADD err;
-    tox_friend_add_norequest(m, public_key, &err);
+    uint32_t new_friend_number = tox_friend_add_norequest(m, public_key, &err);
 
     if (err != TOX_ERR_FRIEND_ADD_OK)
+	{
         fprintf(stderr, "tox_friend_add_norequest failed (error %d)\n", err);
-
-    autoinvite_friendkey_to_default_group(m, public_key);
+	}
+	else
+	{
+		autoinvite_friendnum_to_default_group(m, new_friend_number);
+	}
     
     save_data(m, DATA_FILE);
 }
@@ -544,7 +547,9 @@ int main(int argc, char **argv)
     Tox *m = init_tox();
 
     if (m == NULL)
+	{
         exit(EXIT_FAILURE);
+	}
 
     init_toxbot_state();
     print_profile_info(m);
@@ -553,16 +558,19 @@ int main(int argc, char **argv)
     uint64_t last_friend_purge = 0;
     uint64_t last_group_purge = 0;
 
-    while (!FLAG_EXIT) {
+    while (!FLAG_EXIT)
+	{
         uint64_t cur_time = (uint64_t) time(NULL);
 
-        if (timed_out(last_friend_purge, cur_time, FRIEND_PURGE_INTERVAL)) {
+        if (timed_out(last_friend_purge, cur_time, FRIEND_PURGE_INTERVAL))
+		{
             purge_inactive_friends(m);
             save_data(m, DATA_FILE);
             last_friend_purge = cur_time;
         }
 
-        if (timed_out(last_group_purge, cur_time, GROUP_PURGE_INTERVAL)) {
+        if (timed_out(last_group_purge, cur_time, GROUP_PURGE_INTERVAL))
+		{
             purge_empty_groups(m);
             last_group_purge = cur_time;
         }
@@ -572,5 +580,6 @@ int main(int argc, char **argv)
     }
 
     exit_toxbot(m);
+
     return 0;
 }
