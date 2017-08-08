@@ -568,12 +568,12 @@ void create_default_group(Tox *m)
 	if (group_add((int)groupnum, type, password) == -1)
 	{
 		printf("Default group chat creation by failed\n");
-		tox_conference_delete(m, groupnum, NULL);
+		// dont delete the group // tox_conference_delete(m, groupnum, NULL);
 		return;
     }
 
 	TOX_ERR_CONFERENCE_TITLE error2;
-	bool res = tox_conference_set_title(m, groupnum, (uint8_t *)DEFAULT_GROUP_TITLE, strlen(DEFAULT_GROUP_TITLE), &error2);
+	bool res = tox_conference_set_title(m, groupnum, (uint8_t *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE), &error2);
 
 	const char *pw = password ? " (Password protected)" : "";
 	printf("Default group chat %d created%s\n", groupnum, pw);
