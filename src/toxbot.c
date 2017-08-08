@@ -79,6 +79,18 @@ static void catch_SIGINT(int sig)
     FLAG_EXIT = true;
 }
 
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber)
+{
+	cmd_invite(m, friendnumber, 0, NULL);
+}
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+
+
 static void exit_groupchats(Tox *m, size_t numchats)
 {
     memset(Tox_Bot.g_chats, 0, Tox_Bot.chats_idx * sizeof(struct Group_Chat));
@@ -208,17 +220,6 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
             ++Tox_Bot.num_online_friends;
     }
 }
-
-// --- autoinvite friend to default group ---
-// --- autoinvite friend to default group ---
-// --- autoinvite friend to default group ---
-void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber)
-{
-	cmd_invite(m, friendnumber, 0, NULL);
-}
-// --- autoinvite friend to default group ---
-// --- autoinvite friend to default group ---
-// --- autoinvite friend to default group ---
 
 
 static void cb_friend_request(Tox *m, const uint8_t *public_key, const uint8_t *data, size_t length,
