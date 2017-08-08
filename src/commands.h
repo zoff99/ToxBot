@@ -26,6 +26,6 @@
 #define MAX_COMMAND_LENGTH TOX_MAX_MESSAGE_LENGTH
 
 int execute(Tox *m, int friendnumber, const char *input, int length);
-void cmd_invite(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_LENGTH]);
+void batch_invite(Tox *m, uint32_t friendnum, const char* password);
 
 #endif    /* COMMANDS_H */

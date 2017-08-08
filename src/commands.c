@@ -368,6 +368,47 @@ void cmd_invite(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_L
     printf("Invited %s to group %d\n", name, groupnum);
 }
 
+void batch_invite(Tox *m, uint32_t friendnum, const char* password)
+{
+    const char *outmsg = NULL;
+    int groupnum = Tox_Bot.default_groupnum;
+    int idx = group_index(groupnum);
+
+    if (idx == -1) {
+        outmsg = "Group doesn't exist.";
+        tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
+        return;
+    }
+
+    int has_pass = Tox_Bot.g_chats[idx].has_pass;
+
+    char name[TOX_MAX_NAME_LENGTH];
+    tox_friend_get_name(m, friendnum, (uint8_t *) name, NULL);
+    size_t len = tox_friend_get_name_size(m, friendnum, NULL);
+    name[len] = '\0';
+
+    const char *passwd = password;
+
+    if (has_pass && (!passwd || strcmp(passwd, Tox_Bot.g_chats[idx].password) != 0)) {
+        fprintf(stderr, "Failed to invite %s to group %d (invalid password)\n", name, groupnum);
+        outmsg = "Invalid password.";
+        tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
+        return;
+    }
+
+    TOX_ERR_CONFERENCE_INVITE err;
+
+    if (!tox_conference_invite(m, friendnum, groupnum, &err)) {
+        fprintf(stderr, "Failed to invite %s to group %d\n", name, groupnum);
+        outmsg = "Invite failed";
+        send_error(m, friendnum, outmsg, err);
+        return;
+    }
+
+    printf("Invited %s to group %d\n", name, groupnum);
+}
+
+
 static void cmd_leave(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_LENGTH])
 {
     const char *outmsg = NULL;
