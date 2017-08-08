@@ -84,7 +84,7 @@ static void catch_SIGINT(int sig)
 // --- autoinvite friend to default group ---
 void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber)
 {
-	cmd_invite(m, friendnumber, 0, NULL);
+	cmd_invite(m, friendnumber, 0, (void *)NULL);
 }
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
@@ -557,7 +557,7 @@ void create_default_group(Tox *m)
 
 	const char *password = DEFAULT_GROUP_PASSWORD;
 
-	if (password && strlen(argv[2]) >= MAX_PASSWORD_SIZE)
+	if (password && strlen(password) >= MAX_PASSWORD_SIZE)
 	{
 		printf("Default group chat creation failed: Password too long\n");
         return;
@@ -565,7 +565,7 @@ void create_default_group(Tox *m)
 
 	if (group_add(groupnum, type, password) == -1)
 	{
-		printf("Default group chat creation by %s failed\n", name);
+		printf("Default group chat creation by failed\n");
 		tox_conference_delete(m, groupnum, NULL);
 		return;
     }
@@ -600,7 +600,7 @@ int main(int argc, char **argv)
         usleep(tox_iteration_interval(m) * 1000);
         if (tox_self_get_connection_status(m) && off)
 		{
-            dbg(2, "Tox online, took %llu seconds\n", time(NULL) - cur_time);
+            printf("Tox online, took %llu seconds\n", time(NULL) - cur_time);
             off = 0;
 			break;
         }
@@ -611,7 +611,7 @@ int main(int argc, char **argv)
 		{
 			loop_counter = 0;
 			// if not yet online, bootstrap every 20 seconds
-			dbg(2, "Tox NOT online yet, bootstrapping again\n");
+			printf("Tox NOT online yet, bootstrapping again\n");
 			bootstrap_DHT(m);
 		}
     }

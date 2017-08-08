@@ -27,6 +27,8 @@
 #include <tox/tox.h>
 #include "groupchats.h"
 
+#define c_sleep(x) usleep(1000*x)
+
 struct Tox_Bot {
     uint64_t start_time;
     uint64_t inactive_limit;
