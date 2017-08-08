@@ -55,6 +55,7 @@
 #define FRIEND_PURGE_INTERVAL 1728000 /* 20 days */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 #define DEFAULT_GROUP_PASSWORD "A4g9&cj3w!6d?"
+#define DEFAULT_GROUP_TITLE "ToxCon 2017"
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
 char *DATA_FILE = "toxbot_save";
@@ -544,7 +545,7 @@ static void purge_empty_groups(Tox *m)
 void create_default_group(Tox *m)
 {
 	uint8_t type = TOX_CONFERENCE_TYPE_TEXT;
-	int groupnum = -1;
+	uint32_t groupnum = -1;
 
 	TOX_ERR_CONFERENCE_NEW err;
 	groupnum = tox_conference_new(m, &err);
@@ -563,12 +564,15 @@ void create_default_group(Tox *m)
         return;
 	}
 
-	if (group_add(groupnum, type, password) == -1)
+	if (group_add((int)groupnum, type, password) == -1)
 	{
 		printf("Default group chat creation by failed\n");
 		tox_conference_delete(m, groupnum, NULL);
 		return;
     }
+
+	TOX_ERR_CONFERENCE_TITLE error2;
+	bool res = tox_conference_set_title(m, groupnum, (uint8_t *)DEFAULT_GROUP_TITLE, strlen(DEFAULT_GROUP_TITLE), &error2);
 
 	const char *pw = password ? " (Password protected)" : "";
 	printf("Default group chat %d created%s\n", groupnum, pw);
