@@ -184,7 +184,7 @@ dependencies:
 test:
   override:
     - cd src ; rm -fv toxbot toxbot_static
-    - cd src ; gcc -O2 -fPIC -o toxbot toxcam.c -std=gnu99 -lsodium -I/usr/local/include/ -ltoxcore -ltoxav -lpthread -lvpx -lv4lconvert # -lasound
+    - cd src ; gcc -O2 -fPIC -o toxbot src/toxbot.c src/misc.c src/commands.c src/groupchats.c -std=gnu99 -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -lsodium -I/usr/local/include/ -ltoxcore -ltoxav -lpthread
     - cd src ; ldd toxbot ; exit 0
     - cd src ; ls -al toxbot toxbot_static
     - mkdir -p $CIRCLE_ARTIFACTS/ubuntu_14_04_binaries/
