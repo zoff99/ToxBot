@@ -388,7 +388,7 @@ void batch_invite(Tox *m, uint32_t friendnum, const char* password)
     const char *passwd = password;
 
     if (has_pass && (!passwd || strcmp(passwd, Tox_Bot.g_chats[idx].password) != 0)) {
-        fprintf(stderr, "Failed to invite %s to group %d (invalid password \"%s\" <-> \"%s\")\n", name, groupnum, passwd, Tox_Bot.g_chats[idx].password);
+        fprintf(stderr, "Failed to invite %s to group %d (invalid password)\n", name, groupnum);
         return;
     }
 
