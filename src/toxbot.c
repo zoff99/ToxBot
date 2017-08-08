@@ -573,7 +573,7 @@ void create_default_group(Tox *m)
     }
 
 	TOX_ERR_CONFERENCE_TITLE error2;
-	bool res = tox_conference_set_title(m, groupnum, (uint8_t *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE), &error2);
+	/* bool res = */ tox_conference_set_title(m, groupnum, (uint8_t *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE), &error2);
 
 	const char *pw = password ? " (Password protected)" : "";
 	printf("Default group chat %d created%s\n", groupnum, pw);
