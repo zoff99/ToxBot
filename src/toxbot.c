@@ -571,7 +571,7 @@ void create_default_group(Tox *m)
     }
 
 	const char *pw = password ? " (Password protected)" : "";
-	printf("Default group chat %d created %s\n", groupnum, pw);
+	printf("Default group chat %d created%s\n", groupnum, pw);
 }
 
 int main(int argc, char **argv)
