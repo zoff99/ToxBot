@@ -591,7 +591,7 @@ int main(int argc, char **argv)
     bootstrap_DHT(m);
 
 	// -- wait until bot is online --
-	long long unsigned int cur_time = time(NULL);
+	long long unsigned int cur_time1 = time(NULL);
 	uint8_t off = 1;
 	long long loop_counter = 0;
 	while (1)
@@ -600,7 +600,7 @@ int main(int argc, char **argv)
         usleep(tox_iteration_interval(m) * 1000);
         if (tox_self_get_connection_status(m) && off)
 		{
-            printf("Tox online, took %llu seconds\n", time(NULL) - cur_time);
+            printf("Tox online, took %llu seconds\n", time(NULL) - cur_time1);
             off = 0;
 			break;
         }
