@@ -35,8 +35,8 @@
 #include "toxbot.h"
 #include "misc.h"
 #include "groupchats.h"
-#include "commands.h"
 
+#define MAX_COMMAND_LENGTH TOX_MAX_MESSAGE_LENGTH
 #define MAX_NUM_ARGS 4
 
 extern char *DATA_FILE;
