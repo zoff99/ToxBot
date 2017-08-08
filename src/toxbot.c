@@ -177,6 +177,11 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
 
     Tox_Bot.num_online_friends = 0;
 
+    if (connection_status != TOX_CONNECTION_NONE)
+    {
+        autoinvite_friendnum_to_default_group(m, friendnumber);
+    }
+    
     size_t i, size = tox_self_get_friend_list_size(m);
 
     if (size == 0)
@@ -191,6 +196,21 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
     }
 }
 
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+void autoinvite_friendkey_to_default_group(Tox *m, const uint8_t *public_key)
+{
+}
+
+void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber)
+{
+}
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+// --- autoinvite friend to default group ---
+
+
 static void cb_friend_request(Tox *m, const uint8_t *public_key, const uint8_t *data, size_t length,
                               void *userdata)
 {
@@ -200,6 +220,8 @@ static void cb_friend_request(Tox *m, const uint8_t *public_key, const uint8_t *
     if (err != TOX_ERR_FRIEND_ADD_OK)
         fprintf(stderr, "tox_friend_add_norequest failed (error %d)\n", err);
 
+    autoinvite_friendkey_to_default_group(m, public_key);
+    
     save_data(m, DATA_FILE);
 }
 
@@ -536,7 +558,7 @@ int main(int argc, char **argv)
         }
 
         tox_iterate(m, NULL);
-        usleep(tox_iteration_interval(m) * 1000);;
+        usleep(tox_iteration_interval(m) * 1000);
     }
 
     exit_toxbot(m);
