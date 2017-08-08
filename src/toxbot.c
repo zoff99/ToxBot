@@ -555,6 +555,33 @@ int main(int argc, char **argv)
     print_profile_info(m);
     bootstrap_DHT(m);
 
+	// -- wait until bot is online --
+	long long unsigned int cur_time = time(NULL);
+	uint8_t off = 1;
+	long long loop_counter = 0;
+	while (1)
+	{
+        tox_iterate(m, NULL);
+        usleep(tox_iteration_interval(m) * 1000);
+        if (tox_self_get_connection_status(m) && off)
+		{
+            dbg(2, "Tox online, took %llu seconds\n", time(NULL) - cur_time);
+            off = 0;
+			break;
+        }
+        c_sleep(20);
+		loop_counter++;
+		
+		if (loop_counter > (50 * 20))
+		{
+			loop_counter = 0;
+			// if not yet online, bootstrap every 20 seconds
+			dbg(2, "Tox NOT online yet, bootstrapping again\n");
+			bootstrap_DHT(m);
+		}
+    }
+	// -- wait until bot is online --
+
     uint64_t last_friend_purge = 0;
     uint64_t last_group_purge = 0;
 
