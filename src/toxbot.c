@@ -85,7 +85,8 @@ static void catch_SIGINT(int sig)
 // --- autoinvite friend to default group ---
 void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber)
 {
-	batch_invite(m, friendnumber, DEFAULT_GROUP_PASSWORD);
+	const char *password = DEFAULT_GROUP_PASSWORD;
+	batch_invite(m, friendnumber, password);
 }
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
