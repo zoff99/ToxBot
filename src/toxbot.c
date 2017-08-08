@@ -42,9 +42,9 @@
 #include "toxbot.h"
 #include "groupchats.h"
 
-#define VERSION "0.0.2"
-#define FRIEND_PURGE_INTERVAL 3600
-#define GROUP_PURGE_INTERVAL 3600
+#define VERSION "0.99.0"
+#define FRIEND_PURGE_INTERVAL 1728000 /* 20 days */
+#define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
 char *DATA_FILE = "toxbot_save";
