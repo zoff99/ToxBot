@@ -619,13 +619,12 @@ int main(int argc, char **argv)
 
 	create_default_group(m);
 
+	uint64_t cur_time = (uint64_t) time(NULL);
     uint64_t last_friend_purge = 0;
-    uint64_t last_group_purge = 0;
+    uint64_t last_group_purge = cur_time;
 
     while (!FLAG_EXIT)
 	{
-        uint64_t cur_time = (uint64_t) time(NULL);
-
         if (timed_out(last_friend_purge, cur_time, FRIEND_PURGE_INTERVAL))
 		{
             purge_inactive_friends(m);
