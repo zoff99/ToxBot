@@ -370,7 +370,6 @@ void cmd_invite(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_L
 
 void batch_invite(Tox *m, uint32_t friendnum, const char* password)
 {
-    const char *outmsg = NULL;
     int groupnum = Tox_Bot.default_groupnum;
     int idx = group_index(groupnum);
 
