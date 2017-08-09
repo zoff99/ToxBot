@@ -210,6 +210,7 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
 
     if (connection_status != TOX_CONNECTION_NONE)
     {
+		// TODO: every time a change from TCP -> UDP occurs (or the reverse) we send an invitation. this is not good
         autoinvite_friendnum_to_default_group(m, friendnumber);
     }
     
