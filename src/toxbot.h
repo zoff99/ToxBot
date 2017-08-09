@@ -27,6 +27,7 @@
 #include <tox/tox.h>
 #include "groupchats.h"
 
+#define CLEAR(x) memset(&(x), 0, sizeof(x))
 #define c_sleep(x) usleep(1000*x)
 
 struct Tox_Bot {

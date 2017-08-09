@@ -39,10 +39,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <time.h>
 #include <limits.h>
 #include <signal.h>
 #include <inttypes.h>
+#include <fcntl.h>
 
 #include <tox/tox.h>
 #include <tox/toxav.h>
@@ -61,10 +63,12 @@
 #define MAX_LOG_LINE_LENGTH 1000
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
+const char *log_filename = "toxbot.log";
 char *DATA_FILE = "toxbot_save.dat";
 char *MASTERLIST_FILE = "masterkeys.txt";
 char *DEFAULT_GROUP_PASSWORD_FILE = "default_group_pass.txt";
 char *BOTNAME = "Skupina Robot";
+FILE *logfile = NULL;
 
 struct Tox_Bot Tox_Bot;
 
@@ -88,7 +92,6 @@ void dbg(int level, const char *fmt, ...)
 {
 	char *level_and_format = NULL;
 	char *fmt_copy = NULL;
-	char *log_line_str = NULL;
 
 	if (fmt == NULL)
 	{
@@ -100,15 +103,21 @@ void dbg(int level, const char *fmt, ...)
 		return;
 	}
 
+	if (!logfile)
+	{
+		return;
+	}
+
 	if ((level < 0) || (level > 9))
 	{
 		level = 0;
 	}
 
-	level_and_format = malloc(strlen(fmt) + 3);
+	level_and_format = malloc(strlen(fmt) + 3 + 1);
 
 	if (!level_and_format)
 	{
+		// fprintf(stderr, "free:000a\n");
 		return;
 	}
 
@@ -132,27 +141,30 @@ void dbg(int level, const char *fmt, ...)
 		level_and_format[0] = 'D';
 	}
 
+	level_and_format[(strlen(fmt) + 2)] = '\n';
+	level_and_format[(strlen(fmt) + 3)] = '\0';
+
 	if (level <= CURRENT_LOG_LEVEL)
 	{
-		log_line_str = malloc((size_t)MAX_LOG_LINE_LENGTH);
-		// memset(log_line_str, 0, (size_t)MAX_LOG_LINE_LENGTH);
 		va_list ap;
 		va_start(ap, fmt);
-		vsnprintf(log_line_str, (size_t)MAX_LOG_LINE_LENGTH, level_and_format, ap);
-		fprintf(stderr, "%s\n", log_line_str);
+		vfprintf(logfile, level_and_format, ap);
 		va_end(ap);
-		free(log_line_str);
 	}
 
+	// fprintf(stderr, "free:001\n");
 	if (level_and_format)
 	{
+		// fprintf(stderr, "free:001.a\n");
 		free(level_and_format);
 	}
+	// fprintf(stderr, "free:002\n");
 }
+
 
 void tox_log_cb__custom(Tox *tox, TOX_LOG_LEVEL level, const char *file, uint32_t line, const char *func, const char *message, void *user_data)
 {
-	dbg(level, "%s:%d:%s:%s", file, (int)line, func, message);
+	dbg(9, "%d:%s:%d:%s:%s", (int)level, file, (int)line, func, message);
 }
 
 // --- autoinvite friend to default group ---
@@ -181,7 +193,7 @@ static void exit_groupchats(Tox *m, size_t numchats)
     for (i = 0; i < numchats; ++i)
 	{
         tox_conference_delete(m, chatlist[i], NULL);
-		printf("group removed [1] gnum=%d\n", (int)chatlist[i]);
+		dbg(2, "group removed [1] gnum=%d", (int)chatlist[i]);
     }
 }
 
@@ -196,6 +208,13 @@ static void exit_toxbot(Tox *m)
 
     save_data(m, DATA_FILE);
     tox_kill(m);
+
+	if (logfile)
+	{
+		fclose(logfile);
+		logfile = NULL;
+	}
+
     exit(EXIT_SUCCESS);
 }
 
@@ -278,20 +297,17 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
      * the number of online friends has mysteriously vanished
      */
 
-	printf("friend connection change fnum=%d stats=%d\n", (int)friendnumber, (int)connection_status);
+	dbg(2, "friend connection change fnum=%d stats=%d", (int)friendnumber, (int)connection_status);
 
-    Tox_Bot.num_online_friends = 0;
-
-    if (connection_status != TOX_CONNECTION_NONE)
-    {
-		// TODO: every time a change from TCP -> UDP occurs (or the reverse) we send an invitation. this is not good
-        autoinvite_friendnum_to_default_group(m, friendnumber);
-    }
-    
+    Tox_Bot.num_online_friends = 0;    
     size_t i, size = tox_self_get_friend_list_size(m);
 
     if (size == 0)
+    {
         return;
+    }
+
+	int online_friends_previous = (int)Tox_Bot.num_online_friends;
 
     uint32_t list[size];
     tox_self_get_friend_list(m, list);
@@ -299,6 +315,14 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
     for (i = 0; i < size; ++i) {
         if (tox_friend_get_connection_status(m, list[i], NULL) != TOX_CONNECTION_NONE)
             ++Tox_Bot.num_online_friends;
+    }
+
+    if (connection_status != TOX_CONNECTION_NONE)
+    {
+		if ((int)Tox_Bot.num_online_friends > online_friends_previous)
+		{
+			autoinvite_friendnum_to_default_group(m, friendnumber);
+		}
     }
 }
 
@@ -309,7 +333,7 @@ static void cb_friend_request(Tox *m, const uint8_t *public_key, const uint8_t *
     TOX_ERR_FRIEND_ADD err;
     uint32_t new_friend_number = tox_friend_add_norequest(m, public_key, &err);
 
-	printf("friend request fnum=%d\n", (int)new_friend_number);
+	dbg(2, "friend request fnum=%d", (int)new_friend_number);
 
     if (err != TOX_ERR_FRIEND_ADD_OK)
 	{
@@ -336,7 +360,7 @@ static void cb_friend_message(Tox *m, uint32_t friendnumber, TOX_MESSAGE_TYPE ty
     length = copy_tox_str(message, sizeof(message), (const char *) string, length);
     message[length] = '\0';
 
-	printf("friend message fnum=%d message=%s\n", (int)friendnumber, (char*)message);
+	dbg(2, "friend message fnum=%d message=%s", (int)friendnumber, (char*)message);
 
 
     if (length && execute(m, friendnumber, message, length) == -1)
@@ -380,11 +404,11 @@ static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE t
 	{
         fprintf(stderr, "Invite from %s failed (group_add failed)\n", name);
         tox_conference_delete(m, groupnum, NULL);
-		printf("group removed [2] gnum=%d\n", (int)groupnum);
+		dbg(2, "group removed [2] gnum=%d", (int)groupnum);
         return;
     }
 
-    printf("Accepted groupchat invite from %s [%d]\n", name, groupnum);
+    dbg(2, "Accepted groupchat invite from %s [%d]", name, groupnum);
     return;
 
 on_error:
@@ -445,11 +469,13 @@ static Tox *load_tox(struct Tox_Options *options, char *path)
     FILE *fp = fopen(path, "rb");
     Tox *m = NULL;
 
-    if (fp == NULL) {
+    if (fp == NULL)
+    {
         TOX_ERR_NEW err;
         m = tox_new(options, &err);
 
-        if (err != TOX_ERR_NEW_OK) {
+        if (err != TOX_ERR_NEW_OK)
+        {
             fprintf(stderr, "tox_new failed with error %d\n", err);
             return NULL;
         }
@@ -477,6 +503,8 @@ static Tox *load_tox(struct Tox_Options *options, char *path)
     options->savedata_data = (uint8_t *) data;
     options->savedata_length = data_len;
 
+    options->log_callback = tox_log_cb__custom;
+
     m = tox_new(options, &err);
 
     if (err != TOX_ERR_NEW_OK) {
@@ -493,9 +521,6 @@ static Tox *init_tox(void)
     struct Tox_Options tox_opts;
     memset(&tox_opts, 0, sizeof(struct Tox_Options));
     tox_options_default(&tox_opts);
-
-    // set our own handler for c-toxcore logging messages!!
-    tox_opts.log_callback = tox_log_cb__custom;
 
     Tox *m = load_tox(&tox_opts, DATA_FILE);
 
@@ -559,20 +584,29 @@ static void bootstrap_DHT(Tox *m)
 
 static void print_profile_info(Tox *m)
 {
-    printf("ToxBot version %s\n", VERSION);
-    printf("ID: ");
+    dbg(2, "ToxBot version %s", VERSION);
 
     char address[TOX_ADDRESS_SIZE];
+	char my_tox_id[TOX_ADDRESS_SIZE * 3];
     tox_self_get_address(m, (uint8_t *) address);
     int i;
 
-    for (i = 0; i < TOX_ADDRESS_SIZE; ++i) {
+	CLEAR(my_tox_id);
+
+	int j = 0;
+    for (i = 0; i < TOX_ADDRESS_SIZE; ++i)
+    {
         char d[3];
         snprintf(d, sizeof(d), "%02X", address[i] & 0xff);
-        printf("%s", d);
+        // dbg(2, "%s", d);
+
+		my_tox_id[j] = d[0];
+		j++;
+		my_tox_id[j] = d[1];
+		j++;
     }
 
-    printf("\n");
+	dbg(2, "my ToxID:%s", my_tox_id);
 
     char name[TOX_MAX_NAME_LENGTH];
     size_t len = tox_self_get_name_size(m);
@@ -580,9 +614,9 @@ static void print_profile_info(Tox *m)
     name[len] = '\0';
 
     size_t numfriends = tox_self_get_friend_list_size(m);
-    printf("Name: %s\n", name);
-    printf("Contacts: %d\n", (int) numfriends);
-    printf("Inactive contacts purged after %"PRIu64" days\n", Tox_Bot.inactive_limit / SECONDS_IN_DAY);
+    dbg(2, "Name: %s", name);
+    dbg(2, "Contacts: %d", (int) numfriends);
+    dbg(2, "Inactive contacts purged after %"PRIu64" days", Tox_Bot.inactive_limit / SECONDS_IN_DAY);
 }
 
 static void purge_inactive_friends(Tox *m)
@@ -614,6 +648,7 @@ static void purge_inactive_friends(Tox *m)
     }
 }
 
+#if 0
 static void purge_empty_groups(Tox *m)
 {
     uint32_t i;
@@ -628,7 +663,7 @@ static void purge_empty_groups(Tox *m)
         if (err != TOX_ERR_CONFERENCE_PEER_QUERY_OK || num_peers <= 1) {
             fprintf(stderr, "Deleting empty group %i\n", Tox_Bot.g_chats[i].groupnum);
             tox_conference_delete(m, Tox_Bot.g_chats[i].groupnum, NULL);
-			printf("group removed [3] gnum=%d\n", (int)Tox_Bot.g_chats[i].groupnum);
+			dbg(2, "group removed [3] gnum=%d", (int)Tox_Bot.g_chats[i].groupnum);
             group_leave(i);
 
             if (i >= Tox_Bot.chats_idx) {   // group_leave modifies chats_idx
@@ -637,6 +672,7 @@ static void purge_empty_groups(Tox *m)
         }
     }
 }
+#endif
 
 void create_default_group(Tox *m)
 {
@@ -648,7 +684,7 @@ void create_default_group(Tox *m)
 
 	if (err != TOX_ERR_CONFERENCE_NEW_OK)
 	{
-		printf("Default group chat creation failed to initialize, error=%d\n", err);
+		dbg(2, "Default group chat creation failed to initialize, error=%d", err);
 		return;
 	}
 
@@ -656,15 +692,15 @@ void create_default_group(Tox *m)
 
 	if (password && strlen(password) >= MAX_PASSWORD_SIZE)
 	{
-		printf("Default group chat creation failed: Password too long\n");
+		dbg(2, "Default group chat creation failed: Password too long");
         return;
 	}
 
 	if (group_add((int)groupnum, type, password) == -1)
 	{
-		printf("Default group chat creation by failed\n");
+		dbg(2, "Default group chat creation by failed");
 		tox_conference_delete(m, groupnum, NULL);
-		printf("group removed [4] gnum=%d\n", (int)groupnum);
+		dbg(2, "group removed [4] gnum=%d", (int)groupnum);
 		return;
     }
 
@@ -685,13 +721,16 @@ void create_default_group(Tox *m)
 	// - save group title -
 
 	const char *pw = password ? " (Password protected)" : "";
-	printf("Default group chat %d created%s\n", groupnum, pw);
+	dbg(2, "Default group chat %d created%s", groupnum, pw);
 }
 
 int main(int argc, char **argv)
 {
     signal(SIGINT, catch_SIGINT);
     umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+
+	logfile = fopen(log_filename, "wb");
+	setvbuf(logfile, NULL, _IONBF, 0);
 
     dbg(2, "-- log test --");
 
@@ -761,6 +800,12 @@ int main(int argc, char **argv)
     }
 
     exit_toxbot(m);
+
+	if (logfile)
+	{
+		fclose(logfile);
+		logfile = NULL;
+	}
 
     return 0;
 }
