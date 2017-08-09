@@ -81,6 +81,77 @@ static void catch_SIGINT(int sig)
     FLAG_EXIT = true;
 }
 
+void dbg(int level, const char *fmt, ...)
+{
+	char *level_and_format = NULL;
+	char *fmt_copy = NULL;
+	char *log_line_str = NULL;
+
+	if (fmt == NULL)
+	{
+		return;
+	}
+
+	if (strlen(fmt) < 1)
+	{
+		return;
+	}
+
+	if ((level < 0) || (level > 9))
+	{
+		level = 0;
+	}
+
+	level_and_format = malloc(strlen(fmt) + 3);
+
+	if (!level_and_format)
+	{
+		return;
+	}
+
+	fmt_copy = level_and_format + 2;
+	strcpy(fmt_copy, fmt);
+	level_and_format[1] = ':';
+	if (level == 0)
+	{
+		level_and_format[0] = 'E';
+	}
+	else if (level == 1)
+	{
+		level_and_format[0] = 'W';
+	}
+	else if (level == 2)
+	{
+		level_and_format[0] = 'I';
+	}
+	else
+	{
+		level_and_format[0] = 'D';
+	}
+
+	if (level <= CURRENT_LOG_LEVEL)
+	{
+		log_line_str = malloc((size_t)MAX_LOG_LINE_LENGTH);
+		// memset(log_line_str, 0, (size_t)MAX_LOG_LINE_LENGTH);
+		va_list ap;
+		va_start(ap, fmt);
+		vsnprintf(log_line_str, (size_t)MAX_LOG_LINE_LENGTH, level_and_format, ap);
+		fprintf(stderr, "%s\n", log_line_str);
+		va_end(ap);
+		free(log_line_str);
+	}
+
+	if (level_and_format)
+	{
+		free(level_and_format);
+	}
+}
+
+void tox_log_cb__custom(Tox *tox, TOX_LOG_LEVEL level, const char *file, uint32_t line, const char *func, const char *message, void *user_data)
+{
+	dbg(level, file, ":", line, ":", func, ":", message);
+}
+
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
@@ -419,6 +490,9 @@ static Tox *init_tox(void)
     struct Tox_Options tox_opts;
     memset(&tox_opts, 0, sizeof(struct Tox_Options));
     tox_options_default(&tox_opts);
+
+    // set our own handler for c-toxcore logging messages!!
+    options.log_callback = tox_log_cb__custom;
 
     Tox *m = load_tox(&tox_opts, DATA_FILE);
 
