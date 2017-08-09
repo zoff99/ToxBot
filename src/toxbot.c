@@ -152,7 +152,7 @@ void dbg(int level, const char *fmt, ...)
 
 void tox_log_cb__custom(Tox *tox, TOX_LOG_LEVEL level, const char *file, uint32_t line, const char *func, const char *message, void *user_data)
 {
-	dbg(level, file, ":", line, ":", func, ":", message);
+	dbg(level, "%s:%d:%s:%s", file, (int)line, func, message);
 }
 
 // --- autoinvite friend to default group ---

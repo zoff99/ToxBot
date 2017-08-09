@@ -84,8 +84,9 @@ dependencies:
     ### ------- compile and install libsodium -------
 
     ### ------------ compile and install c-toxcore ------------
-    - cd c-toxcore ; ./autogen.sh ; ./configure --enable-logging --with-log-level=DEBUG --disable-soname-versions --prefix="$INSTALL_DEST"/usr
+    #- cd c-toxcore ; ./autogen.sh ; ./configure --enable-logging --with-log-level=DEBUG --disable-soname-versions
     #- cd c-toxcore ; cmake -DWARNINGS=OFF -DTRACE=ON .
+    - cd c-toxcore ; cmake -DWARNINGS=OFF -DMIN_LOGGER_LEVEL=DEBUG .
     - cd c-toxcore ; make
     - cd c-toxcore ; sudo make install
     - cd c-toxcore ; sudo ldconfig -v 2>/dev/null | grep toxcore
