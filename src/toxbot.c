@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -56,6 +57,8 @@
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 #define DEFAULT_GROUP_PASSWORD "A4g9&cj3w!6d?"
 #define DEFAULT_GROUP_TITLE "ToxCon 2017"
+#define CURRENT_LOG_LEVEL 9 // 0 -> error, 1 -> warn, 2 -> info, 9 -> debug
+#define MAX_LOG_LINE_LENGTH 1000
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
 char *DATA_FILE = "toxbot_save.dat";
@@ -492,7 +495,7 @@ static Tox *init_tox(void)
     tox_options_default(&tox_opts);
 
     // set our own handler for c-toxcore logging messages!!
-    options.log_callback = tox_log_cb__custom;
+    tox_opts.log_callback = tox_log_cb__custom;
 
     Tox *m = load_tox(&tox_opts, DATA_FILE);
 
