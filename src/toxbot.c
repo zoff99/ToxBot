@@ -671,6 +671,19 @@ void create_default_group(Tox *m)
 	TOX_ERR_CONFERENCE_TITLE error2;
 	/* bool res = */ tox_conference_set_title(m, groupnum, (uint8_t *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE), &error2);
 
+	// - save group title -
+	char new_group_title[TOX_MAX_MESSAGE_LENGTH];
+    length = copy_tox_str(new_group_title, sizeof(new_group_title), (const char *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE));
+    int idx = group_index(groupnum);
+    if (idx == -1)
+	{
+		return;
+	}
+
+    memcpy(Tox_Bot.g_chats[idx].title, new_group_title, length + 1);
+    Tox_Bot.g_chats[idx].title_len = length;
+	// - save group title -
+
 	const char *pw = password ? " (Password protected)" : "";
 	printf("Default group chat %d created%s\n", groupnum, pw);
 }
@@ -719,6 +732,8 @@ int main(int argc, char **argv)
 		}
     }
 	// -- wait until bot is online --
+
+	c_sleep(5 * 1000);
 
 	create_default_group(m);
 
