@@ -51,7 +51,7 @@
 #include "toxbot.h"
 #include "groupchats.h"
 
-#define VERSION "0.99.0"
+#define VERSION "0.99.1"
 #define FRIEND_PURGE_INTERVAL 1728000 /* 20 days */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 #define DEFAULT_GROUP_PASSWORD "A4g9&cj3w!6d?"
