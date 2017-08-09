@@ -204,6 +204,8 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
      * the number of online friends has mysteriously vanished
      */
 
+	printf("friend connection change fnum=%d stats=%d\n", (int)friendnumber, (int)connection_status);
+
     Tox_Bot.num_online_friends = 0;
 
     if (connection_status != TOX_CONNECTION_NONE)
@@ -232,6 +234,8 @@ static void cb_friend_request(Tox *m, const uint8_t *public_key, const uint8_t *
     TOX_ERR_FRIEND_ADD err;
     uint32_t new_friend_number = tox_friend_add_norequest(m, public_key, &err);
 
+	printf("friend request fnum=%d\n", (int)new_friend_number);
+
     if (err != TOX_ERR_FRIEND_ADD_OK)
 	{
         fprintf(stderr, "tox_friend_add_norequest failed (error %d)\n", err);
@@ -248,14 +252,20 @@ static void cb_friend_message(Tox *m, uint32_t friendnumber, TOX_MESSAGE_TYPE ty
                               size_t length, void *userdata)
 {
     if (type != TOX_MESSAGE_TYPE_NORMAL)
+	{
         return;
+	}
 
     const char *outmsg;
     char message[TOX_MAX_MESSAGE_LENGTH];
     length = copy_tox_str(message, sizeof(message), (const char *) string, length);
     message[length] = '\0';
 
-    if (length && execute(m, friendnumber, message, length) == -1) {
+	printf("friend message fnum=%d message=%s\n", (int)friendnumber, (char*)message);
+
+
+    if (length && execute(m, friendnumber, message, length) == -1)
+	{
         outmsg = "Invalid command. Type help for a list of commands";
         tox_friend_send_message(m, friendnumber, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
     }
@@ -265,7 +275,9 @@ static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE t
                             const uint8_t *cookie, size_t length, void *userdata)
 {
     if (!friend_is_master(m, friendnumber))
+	{
         return;
+	}
 
     char name[TOX_MAX_NAME_LENGTH];
     tox_friend_get_name(m, friendnumber, (uint8_t *) name, NULL);
