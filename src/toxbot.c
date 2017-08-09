@@ -58,8 +58,9 @@
 #define DEFAULT_GROUP_TITLE "ToxCon 2017"
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
-char *DATA_FILE = "toxbot_save";
-char *MASTERLIST_FILE = "masterkeys";
+char *DATA_FILE = "toxbot_save.dat";
+char *MASTERLIST_FILE = "masterkeys.txt";
+char *DEFAULT_GROUP_PASSWORD_FILE = "default_group_pass.txt";
 char *BOTNAME = "Skupina Robot";
 
 struct Tox_Bot Tox_Bot;
@@ -106,6 +107,7 @@ static void exit_groupchats(Tox *m, size_t numchats)
     for (i = 0; i < numchats; ++i)
 	{
         tox_conference_delete(m, chatlist[i], NULL);
+		printf("group removed [1] gnum=%d\n", (int)chatlist[i]);
     }
 }
 
@@ -287,9 +289,11 @@ static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE t
         }
     }
 
-    if (group_add(groupnum, type, NULL) == -1) {
+    if (group_add(groupnum, type, NULL) == -1)
+	{
         fprintf(stderr, "Invite from %s failed (group_add failed)\n", name);
         tox_conference_delete(m, groupnum, NULL);
+		printf("group removed [2] gnum=%d\n", (int)groupnum);
         return;
     }
 
@@ -534,6 +538,7 @@ static void purge_empty_groups(Tox *m)
         if (err != TOX_ERR_CONFERENCE_PEER_QUERY_OK || num_peers <= 1) {
             fprintf(stderr, "Deleting empty group %i\n", Tox_Bot.g_chats[i].groupnum);
             tox_conference_delete(m, Tox_Bot.g_chats[i].groupnum, NULL);
+			printf("group removed [3] gnum=%d\n", (int)Tox_Bot.g_chats[i].groupnum);
             group_leave(i);
 
             if (i >= Tox_Bot.chats_idx) {   // group_leave modifies chats_idx
@@ -568,7 +573,8 @@ void create_default_group(Tox *m)
 	if (group_add((int)groupnum, type, password) == -1)
 	{
 		printf("Default group chat creation by failed\n");
-		// dont delete the group // tox_conference_delete(m, groupnum, NULL);
+		tox_conference_delete(m, groupnum, NULL);
+		printf("group removed [4] gnum=%d\n", (int)groupnum);
 		return;
     }
 
@@ -639,7 +645,7 @@ int main(int argc, char **argv)
 
         if (timed_out(last_group_purge, cur_time, GROUP_PURGE_INTERVAL))
 		{
-            purge_empty_groups(m);
+            // purge_empty_groups(m);
             last_group_purge = cur_time;
         }
 

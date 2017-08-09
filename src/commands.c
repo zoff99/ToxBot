@@ -160,6 +160,9 @@ static void cmd_gmessage(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_
 
 static void cmd_group(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_LENGTH])
 {
+	// ******* DISABLE *******
+	return;
+
     const char *outmsg = NULL;
 
     if (argc < 1) {
@@ -207,11 +210,13 @@ static void cmd_group(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COM
         return;
     }
 
-    if (group_add(groupnum, type, password) == -1) {
+    if (group_add(groupnum, type, password) == -1)
+	{
         printf("Group chat creation by %s failed\n", name);
         outmsg = "Group chat creation failed";
         tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
         tox_conference_delete(m, groupnum, NULL);
+		printf("group removed [c1] gnum=%d\n", (int)groupnum);
         return;
     }
 
@@ -405,6 +410,9 @@ void batch_invite(Tox *m, uint32_t friendnum, const char* password)
 
 static void cmd_leave(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_LENGTH])
 {
+	// ******* DISABLE *******
+	return;
+
     const char *outmsg = NULL;
 
     if (!friend_is_master(m, friendnum)) {
@@ -426,11 +434,16 @@ static void cmd_leave(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COM
         return;
     }
 
-    if (!tox_conference_delete(m, groupnum, NULL)) {
+    if (!tox_conference_delete(m, groupnum, NULL))
+	{
+		printf("group removed [c2a] gnum=%d\n", (int)groupnum);
+
         outmsg = "Error: Invalid group number";
         tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
         return;
     }
+	printf("group removed [c2b] gnum=%d\n", (int)groupnum);
+
 
     char msg[MAX_COMMAND_LENGTH];
 
