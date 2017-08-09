@@ -680,12 +680,14 @@ int main(int argc, char **argv)
     signal(SIGINT, catch_SIGINT);
     umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
+    dbg(2, "-- log test --");
+
     Tox *m = init_tox();
 
     if (m == NULL)
-	{
+    {
         exit(EXIT_FAILURE);
-	}
+    }
 
     init_toxbot_state();
     print_profile_info(m);
@@ -701,7 +703,7 @@ int main(int argc, char **argv)
         usleep(tox_iteration_interval(m) * 1000);
         if (tox_self_get_connection_status(m) && off)
 		{
-            printf("Tox online, took %llu seconds\n", time(NULL) - cur_time1);
+            dbg(2, "Tox online, took %llu seconds", time(NULL) - cur_time1);
             off = 0;
 			break;
         }
@@ -712,7 +714,7 @@ int main(int argc, char **argv)
 		{
 			loop_counter = 0;
 			// if not yet online, bootstrap every 20 seconds
-			printf("Tox NOT online yet, bootstrapping again\n");
+			dbg(1, "Tox NOT online yet, bootstrapping again");
 			bootstrap_DHT(m);
 		}
     }
