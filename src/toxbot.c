@@ -673,7 +673,7 @@ void create_default_group(Tox *m)
 
 	// - save group title -
 	char new_group_title[TOX_MAX_MESSAGE_LENGTH];
-    length = copy_tox_str(new_group_title, sizeof(new_group_title), (const char *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE));
+    size_t length = copy_tox_str(new_group_title, sizeof(new_group_title), (const char *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE));
     int idx = group_index(groupnum);
     if (idx == -1)
 	{
