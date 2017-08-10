@@ -54,7 +54,7 @@
 #include "toxbot.h"
 #include "groupchats.h"
 
-#define VERSION "0.99.1"
+#define VERSION "0.99.2"
 #define FRIEND_PURGE_INTERVAL 1728000 /* 20 days */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 #define DEFAULT_GROUP_PASSWORD "A4g9&cj3w!6d?"
@@ -172,6 +172,8 @@ void tox_log_cb__custom(Tox *tox, TOX_LOG_LEVEL level, const char *file, uint32_
 // --- autoinvite friend to default group ---
 void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber)
 {
+	dbg(2, "friend invite to default group fnum=%d", (int)friendnumber);
+
 	const char *password = DEFAULT_GROUP_PASSWORD;
 	batch_invite(m, friendnumber, password);
 }
@@ -226,19 +228,19 @@ bool friend_is_master(Tox *m, uint32_t friendnumber)
         FILE *fp = fopen(MASTERLIST_FILE, "w");
 
         if (fp == NULL) {
-            fprintf(stderr, "Warning: failed to create masterkeys file\n");
+            dbg(1, "Warning: failed to create masterkeys file");
             return false;
         }
 
         fclose(fp);
-        fprintf(stderr, "Warning: creating new masterkeys file. Did you lose the old one?\n");
+        dbg(1, "Warning: creating new masterkeys file. Did you lose the old one?");
         return false;
     }
 
     FILE *fp = fopen(MASTERLIST_FILE, "r");
 
     if (fp == NULL) {
-        fprintf(stderr, "Warning: failed to read masterkeys file\n");
+        dbg(1, "Warning: failed to read masterkeys file");
         return false;
     }
 
@@ -276,15 +278,15 @@ static void cb_self_connection_change(Tox *m, TOX_CONNECTION connection_status, 
 {
     switch (connection_status) {
         case TOX_CONNECTION_NONE:
-            fprintf(stderr, "Connection to Tox network has been lost\n");
+            dbg(1, "Connection to Tox network has been lost");
             break;
 
         case TOX_CONNECTION_TCP:
-            fprintf(stderr, "Connection to Tox network is weak (using TCP)\n");
+            dbg(1, "Connection to Tox network is weak (using TCP)");
             break;
 
         case TOX_CONNECTION_UDP:
-            fprintf(stderr, "Connection to Tox network is strong (using UDP)\n");
+            dbg(1, "Connection to Tox network is strong (using UDP)");
             break;
     }
 }
@@ -299,6 +301,8 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
 
 	dbg(2, "friend connection change fnum=%d stats=%d", (int)friendnumber, (int)connection_status);
 
+	int online_friends_previous = (int)Tox_Bot.num_online_friends;
+
     Tox_Bot.num_online_friends = 0;    
     size_t i, size = tox_self_get_friend_list_size(m);
 
@@ -307,7 +311,6 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
         return;
     }
 
-	int online_friends_previous = (int)Tox_Bot.num_online_friends;
 
     uint32_t list[size];
     tox_self_get_friend_list(m, list);
@@ -316,6 +319,8 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
         if (tox_friend_get_connection_status(m, list[i], NULL) != TOX_CONNECTION_NONE)
             ++Tox_Bot.num_online_friends;
     }
+
+	dbg(2, "friend connection change fnum=%d online friends prev=%d online friends now=%d", (int)friendnumber, (int)online_friends_previous, (int)Tox_Bot.num_online_friends);
 
     if (connection_status != TOX_CONNECTION_NONE)
     {
@@ -337,11 +342,11 @@ static void cb_friend_request(Tox *m, const uint8_t *public_key, const uint8_t *
 
     if (err != TOX_ERR_FRIEND_ADD_OK)
 	{
-        fprintf(stderr, "tox_friend_add_norequest failed (error %d)\n", err);
+        dbg(0, "tox_friend_add_norequest failed (error %d)", err);
 	}
 	else
 	{
-		autoinvite_friendnum_to_default_group(m, new_friend_number);
+		// ** error when doing it here ** // autoinvite_friendnum_to_default_group(m, new_friend_number);
 	}
     
     save_data(m, DATA_FILE);
@@ -402,7 +407,7 @@ static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE t
 
     if (group_add(groupnum, type, NULL) == -1)
 	{
-        fprintf(stderr, "Invite from %s failed (group_add failed)\n", name);
+        dbg(0, "Invite from %s failed (group_add failed)", name);
         tox_conference_delete(m, groupnum, NULL);
 		dbg(2, "group removed [2] gnum=%d", (int)groupnum);
         return;
@@ -412,7 +417,7 @@ static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE t
     return;
 
 on_error:
-    fprintf(stderr, "Invite from %s failed (core failure)\n", name);
+    dbg(0, "Invite from %s failed (core failure)", name);
 }
 
 static void cb_group_titlechange(Tox *m, uint32_t groupnumber, uint32_t peernumber, const uint8_t *title,
@@ -460,7 +465,7 @@ int save_data(Tox *m, const char *path)
     return 0;
 
 on_error:
-    fprintf(stderr, "Warning: save_data failed\n");
+    dbg(0, "Warning: save_data failed");
     return -1;
 }
 
@@ -476,7 +481,7 @@ static Tox *load_tox(struct Tox_Options *options, char *path)
 
         if (err != TOX_ERR_NEW_OK)
         {
-            fprintf(stderr, "tox_new failed with error %d\n", err);
+            dbg(0, "tox_new failed with error %d", err);
             return NULL;
         }
 
@@ -508,7 +513,7 @@ static Tox *load_tox(struct Tox_Options *options, char *path)
     m = tox_new(options, &err);
 
     if (err != TOX_ERR_NEW_OK) {
-        fprintf(stderr, "tox_new failed with error %d\n", err);
+        dbg(0, "tox_new failed with error %d", err);
         return NULL;
     }
 
@@ -578,7 +583,7 @@ static void bootstrap_DHT(Tox *m)
         free(key);
 
         if (err != TOX_ERR_BOOTSTRAP_OK)
-            fprintf(stderr, "Failed to bootstrap DHT via: %s %d (error %d)\n", nodes[i].ip, nodes[i].port, err);
+            dbg(0, "Failed to bootstrap DHT via: %s %d (error %d)", nodes[i].ip, nodes[i].port, err);
     }
 }
 
@@ -661,7 +666,7 @@ static void purge_empty_groups(Tox *m)
         uint32_t num_peers = tox_conference_peer_count(m, Tox_Bot.g_chats[i].groupnum, &err);
 
         if (err != TOX_ERR_CONFERENCE_PEER_QUERY_OK || num_peers <= 1) {
-            fprintf(stderr, "Deleting empty group %i\n", Tox_Bot.g_chats[i].groupnum);
+            dbg(2, "Deleting empty group %i", Tox_Bot.g_chats[i].groupnum);
             tox_conference_delete(m, Tox_Bot.g_chats[i].groupnum, NULL);
 			dbg(2, "group removed [3] gnum=%d", (int)Tox_Bot.g_chats[i].groupnum);
             group_leave(i);
@@ -772,8 +777,8 @@ int main(int argc, char **argv)
     }
 	// -- wait until bot is online --
 
-	c_sleep(5 * 1000);
-
+	// -- wait 3 seconds before creating default group --
+	c_sleep(3 * 1000);
 	create_default_group(m);
 
 	uint64_t cur_time = (uint64_t) time(NULL);
