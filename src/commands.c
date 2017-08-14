@@ -355,7 +355,7 @@ void cmd_invite(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_L
         passwd = argv[2];
 
     if (has_pass && (!passwd || strcmp(argv[2], Tox_Bot.g_chats[idx].password) != 0)) {
-        fprintf(stderr, "Failed to invite %s to group %d (invalid password)\n", name, groupnum);
+        dbg(9, "Failed to invite %s to group %d (invalid password)", name, groupnum);
         outmsg = "Invalid password.";
         tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
         return;
@@ -364,21 +364,22 @@ void cmd_invite(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_L
     TOX_ERR_CONFERENCE_INVITE err;
 
     if (!tox_conference_invite(m, friendnum, groupnum, &err)) {
-        fprintf(stderr, "Failed to invite %s to group %d\n", name, groupnum);
+        dbg(9, "Failed to invite %s to group %d", name, groupnum);
         outmsg = "Invite failed";
         send_error(m, friendnum, outmsg, err);
         return;
     }
 
-    printf("Invited %s to group %d\n", name, groupnum);
+    dbg(2, "Invited %s to group %d", name, groupnum);
 }
 
-void batch_invite(Tox *m, uint32_t friendnum, const char* password)
+void batch_invite(Tox *m, uint32_t friendnum, const char* password, int silent)
 {
     int groupnum = Tox_Bot.default_groupnum;
     int idx = group_index(groupnum);
 
-    if (idx == -1) {
+    if (idx == -1)
+	{
 		fprintf(stderr, "Group doesn't exist.\n");
         return;
     }
@@ -392,19 +393,30 @@ void batch_invite(Tox *m, uint32_t friendnum, const char* password)
 
     const char *passwd = password;
 
-    if (has_pass && (!passwd || strcmp(passwd, Tox_Bot.g_chats[idx].password) != 0)) {
-        fprintf(stderr, "Failed to invite %s to group %d (invalid password)\n", name, groupnum);
+    if (has_pass && (!passwd || strcmp(passwd, Tox_Bot.g_chats[idx].password) != 0))
+	{
+		if (silent != 1)
+		{
+			dbg(9, "Failed to invite %s to group %d (invalid password)", name, groupnum);
+		}
         return;
     }
 
     TOX_ERR_CONFERENCE_INVITE err;
 
-    if (!tox_conference_invite(m, friendnum, groupnum, &err)) {
-        fprintf(stderr, "Failed to invite %s to group %d\n", name, groupnum);
+    if (!tox_conference_invite(m, friendnum, groupnum, &err))
+	{
+		if (silent != 1)
+		{
+			dbg(9, "Failed to invite %s to group %d", name, groupnum);
+		}
         return;
     }
 
-    printf("Invited %s to group %d\n", name, groupnum);
+	if (silent != 1)
+	{
+		dbg(2, "Invited %s to group %d silent=%d", name, groupnum, silent);
+	}
 }
 
 

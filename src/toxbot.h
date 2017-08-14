@@ -29,6 +29,7 @@
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 #define c_sleep(x) usleep(1000*x)
+#define CURRENT_LOG_LEVEL 9 // 0 -> error, 1 -> warn, 2 -> info, 9 -> debug
 
 struct Tox_Bot {
     uint64_t start_time;
@@ -43,5 +44,7 @@ struct Tox_Bot {
 int load_Masters(const char *path);
 int save_data(Tox *m, const char *path);
 bool friend_is_master(Tox *m, uint32_t friendnumber);
+void dbg(int level, const char *fmt, ...);
+
 
 #endif /* TOXBOT_H */
