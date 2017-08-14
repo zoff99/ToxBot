@@ -54,7 +54,7 @@
 #include "toxbot.h"
 #include "groupchats.h"
 
-#define VERSION "0.99.2"
+#define VERSION "0.99.3"
 #define FRIEND_PURGE_INTERVAL 1728000 /* 20 days */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 #define DEFAULT_GROUP_PASSWORD "A4g9&cj3w!6d?"
@@ -315,9 +315,12 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
     uint32_t list[size];
     tox_self_get_friend_list(m, list);
 
-    for (i = 0; i < size; ++i) {
+    for (i = 0; i < size; ++i)
+	{
         if (tox_friend_get_connection_status(m, list[i], NULL) != TOX_CONNECTION_NONE)
+		{
             ++Tox_Bot.num_online_friends;
+		}
     }
 
 	dbg(2, "friend connection change fnum=%d online friends prev=%d online friends now=%d", (int)friendnumber, (int)online_friends_previous, (int)Tox_Bot.num_online_friends);
@@ -799,6 +802,75 @@ int main(int argc, char **argv)
             // purge_empty_groups(m);
             last_group_purge = cur_time;
         }
+
+		// check if we have lost a friend in the group ----------
+		size_t numfriends = tox_self_get_friend_list_size(m);
+
+		if (numfriends > 0)
+		{
+			uint32_t friend_list[numfriends];
+			tox_self_get_friend_list(m, friend_list);
+
+			int groupnum = Tox_Bot.default_groupnum;
+			int idx = group_index(groupnum);
+
+			if (idx == -1)
+			{
+				dbg(9, "Default Group doesn't exist.\n");
+			}
+			else
+			{
+				TOX_ERR_CONFERENCE_PEER_QUERY error2;
+				uint32_t group_peer_count = tox_conference_peer_count(m, (uint32_t)idx, &error2);
+
+				if (group_peer_count != numfriends)
+				{
+					size_t i;
+					for (i = 0; i < numfriends; ++i)
+					{
+						uint32_t friendnum = friend_list[i];
+						if (!tox_friend_exists(m, friendnum))
+						{
+							continue;
+						}
+						else
+						{
+							if (tox_friend_get_connection_status(m, friendnum, NULL) != TOX_CONNECTION_NONE)
+							{
+								char friend_key[TOX_PUBLIC_KEY_SIZE];
+								TOX_ERR_FRIEND_GET_PUBLIC_KEY error3;
+								if (tox_friend_get_public_key(m, friendnum, (uint8_t *)friend_key, &error3) == 0)
+								{
+									int found = 0;
+									size_t group_peer_num;
+									for (group_peer_num = 0; i < group_peer_count; ++i)
+									{
+										char group_peer_key[TOX_PUBLIC_KEY_SIZE];
+										TOX_ERR_CONFERENCE_PEER_QUERY error4;
+										tox_conference_peer_get_public_key(m, (uint32_t)idx, (uint32_t)group_peer_num, (uint8_t*)group_peer_key, &error4);
+
+										if (strncmp(friend_key, group_peer_key, (size_t)TOX_PUBLIC_KEY_SIZE) == 0)
+										{
+											// matched friend with group peer
+											found = 1;
+											break;
+										}
+									}
+
+									if (found == 0)
+									{
+										// we lost the peer, invite again to group
+										dbg(0, "We lost peer %d in Group", (int)friendnum);
+										autoinvite_friendnum_to_default_group(m, friendnum);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		// check if we have lost a friend in the group ----------
 
         tox_iterate(m, NULL);
         usleep(tox_iteration_interval(m) * 1000);
