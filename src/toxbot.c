@@ -146,8 +146,9 @@ void dbg(int level, const char *fmt, ...)
         time_t t3 = time(NULL);
         struct tm tm3 = *localtime(&t3);
 
-	char *level_and_format_2 = malloc(strlen(level_and_format) + 5 + 2 + 2 + 1 + 3 + 3 + 3 + 1);
-	snprintf(level_and_format_2, (strlen(level_and_format) + 5 + 2 + 2 + 1 + 3 + 3 + 3 + 1), "%04d-%02d-%02d %02d:%02d:%02d:%s",
+	char *level_and_format_2 = malloc(strlen(level_and_format) + 5 + 3 + 3 + 1 + 3 + 3 + 3 + 1);
+	level_and_format_2[0] = '\0';
+	snprintf(level_and_format_2, (strlen(level_and_format) + 5 + 3 + 3 + 1 + 3 + 3 + 3 + 1), "%04d-%02d-%02d %02d:%02d:%02d:%s",
 		 tm3.tm_year + 1900, tm3.tm_mon + 1, tm3.tm_mday,
                  tm3.tm_hour, tm3.tm_min, tm3.tm_sec, level_and_format);	
 	
