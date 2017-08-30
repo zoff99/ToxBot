@@ -847,7 +847,7 @@ int main(int argc, char **argv)
 					dbg(0, "group_peer_count < (numfriends + 1)");
 
 					size_t i;
-					for (i = 0; i < numfriends; ++i)
+					for (i = 0; i < numfriends; i++)
 					{
 						uint32_t friendnum = friend_list[i];
 						dbg(0, "checking tox_friend=%d", (int)friendnum);
@@ -870,9 +870,9 @@ int main(int argc, char **argv)
 
 									int found = 0;
 									size_t group_peer_num;
-									for (group_peer_num = 0; group_peer_num < group_peer_count; ++i)
+									for (group_peer_num = 0; group_peer_num < group_peer_count; group_peer_num++)
 									{
-										dbg(0, "group_peer_num=%d", (int)group_peer_num);
+										// dbg(0, "group_peer_num=%d", (int)group_peer_num);
 
 										char group_peer_key[TOX_PUBLIC_KEY_SIZE];
 										TOX_ERR_CONFERENCE_PEER_QUERY error4;
