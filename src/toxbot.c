@@ -112,7 +112,7 @@ void dbg(int level, const char *fmt, ...)
 		level = 0;
 	}
 
-	level_and_format = malloc(strlen(fmt) + 3 + 1);
+	level_and_format = malloc(strlen(fmt) + 3 + 1 + strlen("%d-%d-%d %d:%d:%d:"));
 
 	if (!level_and_format)
 	{
@@ -120,7 +120,7 @@ void dbg(int level, const char *fmt, ...)
 		return;
 	}
 
-	fmt_copy = level_and_format + 2;
+	fmt_copy = level_and_format + 2 + strlen("%d-%d-%d %d:%d:%d:");
 	strcpy(fmt_copy, fmt);
 	level_and_format[1] = ':';
 	if (level == 0)
@@ -140,14 +140,36 @@ void dbg(int level, const char *fmt, ...)
 		level_and_format[0] = 'D';
 	}
 
-	level_and_format[(strlen(fmt) + 2)] = '\n';
-	level_and_format[(strlen(fmt) + 3)] = '\0';
+	level_and_format[(strlen(fmt) + 2 + strlen("%d-%d-%d %d:%d:%d:"))] = '\n';
+	level_and_format[(strlen(fmt) + 3 + strlen("%d-%d-%d %d:%d:%d:"))] = '\0';
 
+        time_t t = time(NULL);
+        struct tm tm = *localtime(&t);
+
+	level_and_format[2] = '%';
+	level_and_format[3] = 'd';
+	level_and_format[4] = '-';
+	level_and_format[5] = '%';
+	level_and_format[6] = 'd';
+	level_and_format[7] = '-';
+	level_and_format[8] = '%';
+	level_and_format[9] = 'd';
+	level_and_format[10] = ' ';
+	level_and_format[11] = '%';
+	level_and_format[12] = 'd';
+	level_and_format[13] = ':';
+	level_and_format[14] = '%';
+	level_and_format[15] = 'd';
+	level_and_format[16] = ':';
+	level_and_format[17] = '%';
+	level_and_format[18] = 'd';
+	level_and_format[19] = ':';
+		
 	if (level <= CURRENT_LOG_LEVEL)
 	{
 		va_list ap;
 		va_start(ap, fmt);
-		vfprintf(logfile, level_and_format, ap);
+		vfprintf(logfile, level_and_format, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, ap);
 		va_end(ap);
 	}
 
