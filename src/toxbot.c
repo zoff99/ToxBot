@@ -870,7 +870,7 @@ int main(int argc, char **argv)
 
 									int found = 0;
 									size_t group_peer_num;
-									for (group_peer_num = 0; i < group_peer_count; ++i)
+									for (group_peer_num = 0; group_peer_num < group_peer_count; ++i)
 									{
 										dbg(0, "group_peer_num=%d", (int)group_peer_num);
 
