@@ -821,10 +821,10 @@ int main(int argc, char **argv)
 
 		if (numfriends > 0)
 		{
-			dbg(9, "\n");
-			dbg(9, "==========================================================\n");
-			dbg(9, "==========================================================\n");
-			dbg(9, "numfriends=%d\n", (int)numfriends);
+			// dbg(9, "\n");
+			// dbg(9, "==========================================================\n");
+			// dbg(9, "==========================================================\n");
+			// dbg(9, "numfriends=%d\n", (int)numfriends);
 			
 			uint32_t friend_list[numfriends];
 			tox_self_get_friend_list(m, friend_list);
@@ -834,39 +834,39 @@ int main(int argc, char **argv)
 
 			if (idx == -1)
 			{
-				dbg(9, "Default Group doesn't exist.\n");
+				// dbg(9, "Default Group doesn't exist.\n");
 			}
 			else
 			{
 				TOX_ERR_CONFERENCE_PEER_QUERY error2;
 				uint32_t group_peer_count = tox_conference_peer_count(m, (uint32_t)idx, &error2);
-				dbg(0, "group_peer_count=%d groupnum=%d", (int)group_peer_count, (int)idx);
+				// dbg(0, "group_peer_count=%d groupnum=%d", (int)group_peer_count, (int)idx);
 
 				if (group_peer_count < (numfriends + 1))
 				{
-					dbg(0, "group_peer_count < (numfriends + 1)");
+					// dbg(0, "group_peer_count < (numfriends + 1)");
 
 					size_t i;
 					for (i = 0; i < numfriends; i++)
 					{
 						uint32_t friendnum = friend_list[i];
-						dbg(0, "checking tox_friend=%d", (int)friendnum);
+						// dbg(0, "checking tox_friend=%d", (int)friendnum);
 						if (!tox_friend_exists(m, friendnum))
 						{
-							dbg(0, "!tox_friend_exists=%d", (int)friendnum);
+							// dbg(0, "!tox_friend_exists=%d", (int)friendnum);
 							continue;
 						}
 						else
 						{
 							if (tox_friend_get_connection_status(m, (uint32_t)friendnum, NULL) != TOX_CONNECTION_NONE)
 							{
-								dbg(0, "friend online=%d", (int)friendnum);
+								// dbg(0, "friend online=%d", (int)friendnum);
 
 								char friend_key[TOX_PUBLIC_KEY_SIZE];
 								TOX_ERR_FRIEND_GET_PUBLIC_KEY error3;
 								if (tox_friend_get_public_key(m, (uint32_t)friendnum, (uint8_t *)friend_key, &error3) != 0)
 								{
-									dbg(0, "friend tox_friend_get_public_key:OK");
+									// dbg(0, "friend tox_friend_get_public_key:OK");
 
 									int found = 0;
 									size_t group_peer_num;
@@ -883,7 +883,7 @@ int main(int argc, char **argv)
 											// matched friend with group peer
 											found = 1;
 
-											dbg(0, "friend_key == group_peer_key");
+											// dbg(0, "friend_key == group_peer_key");
 											break;
 										}
 									}
@@ -891,22 +891,22 @@ int main(int argc, char **argv)
 									if (found == 0)
 									{
 										// we lost the peer, invite again to group
-										dbg(0, "We lost peer %d in Group", (int)friendnum);
+										// ** // dbg(0, "We lost peer %d in Group", (int)friendnum);
 										autoinvite_friendnum_to_default_group(m, friendnum, 1);
 									}
 									else
 									{
-										dbg(0, "all OK");
+										// dbg(0, "all OK");
 									}
 								}
 								else
 								{
-									dbg(9, "friend tox_friend_get_public_key:ERR:%d", (int)error3);
+									// dbg(9, "friend tox_friend_get_public_key:ERR:%d", (int)error3);
 								}
 							}
 							else
 							{
-								dbg(9, "friend tox_friend_get_connection_status:ERR");
+								// dbg(9, "friend tox_friend_get_connection_status:ERR");
 							}
 						}
 					}
