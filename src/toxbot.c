@@ -849,8 +849,8 @@ int main(int argc, char **argv)
 					size_t i;
 					for (i = 0; i < numfriends; ++i)
 					{
-						dbg(0, "checking tox_friend=%d", (int)friendnum);
 						uint32_t friendnum = friend_list[i];
+						dbg(0, "checking tox_friend=%d", (int)friendnum);
 						if (!tox_friend_exists(m, friendnum))
 						{
 							dbg(0, "!tox_friend_exists=%d", (int)friendnum);
