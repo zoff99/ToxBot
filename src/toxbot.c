@@ -821,6 +821,9 @@ int main(int argc, char **argv)
 
 		if (numfriends > 0)
 		{
+			dbg(9, "\n");
+			dbg(9, "==========================================================\n");
+			dbg(9, "==========================================================\n");
 			dbg(9, "numfriends=%d\n", (int)numfriends);
 			
 			uint32_t friend_list[numfriends];
@@ -846,6 +849,7 @@ int main(int argc, char **argv)
 					size_t i;
 					for (i = 0; i < numfriends; ++i)
 					{
+						dbg(0, "checking tox_friend=%d", (int)friendnum);
 						uint32_t friendnum = friend_list[i];
 						if (!tox_friend_exists(m, friendnum))
 						{
