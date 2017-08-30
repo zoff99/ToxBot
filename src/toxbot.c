@@ -147,7 +147,9 @@ void dbg(int level, const char *fmt, ...)
         struct tm tm = *localtime(&t);
 
 	char *level_and_format_2 = malloc(strlen(level_and_format) + 5 + 2 + 2 + 1 + 3 + 3 + 3 + 1);
-	snprintf(level_and_format_2, strlen(level_and_format_2), "%d-%d-%d %d:%d:%d:%s", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, level_and_format);
+	snprintf(level_and_format_2, (strlen(level_and_format) + 5 + 2 + 2 + 1 + 3 + 3 + 3 + 1), "%d-%d-%d %d:%d:%d:%s",
+		 tm3.tm_year + 1900, tm3.tm_mon + 1, tm3.tm_mday,
+                 tm3.tm_hour, tm3.tm_min, tm3.tm_sec, level_and_format);	
 	
 	if (level <= CURRENT_LOG_LEVEL)
 	{
