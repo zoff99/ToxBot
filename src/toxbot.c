@@ -153,7 +153,7 @@ void dbg(int level, const char *fmt, ...)
 	{
 		va_list ap;
 		va_start(ap, fmt);
-		vfprintf(logfile, level_and_format, ap);
+		vfprintf(logfile, level_and_format_2, ap);
 		va_end(ap);
 	}
 
