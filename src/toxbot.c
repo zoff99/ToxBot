@@ -143,8 +143,8 @@ void dbg(int level, const char *fmt, ...)
 	level_and_format[(strlen(fmt) + 2)] = '\n';
 	level_and_format[(strlen(fmt) + 3)] = '\0';
 
-        time_t t = time(NULL);
-        struct tm tm = *localtime(&t);
+        time_t t3 = time(NULL);
+        struct tm tm3 = *localtime(&t3);
 
 	char *level_and_format_2 = malloc(strlen(level_and_format) + 5 + 2 + 2 + 1 + 3 + 3 + 3 + 1);
 	snprintf(level_and_format_2, (strlen(level_and_format) + 5 + 2 + 2 + 1 + 3 + 3 + 3 + 1), "%d-%d-%d %d:%d:%d:%s",
