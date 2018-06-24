@@ -57,8 +57,8 @@
 #define VERSION "0.99.3"
 #define FRIEND_PURGE_INTERVAL 1728000 /* 20 days */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
-#define DEFAULT_GROUP_PASSWORD "A4g9&cj3w!6d?"
-#define DEFAULT_GROUP_TITLE "ToxCon 2017"
+#define DEFAULT_GROUP_PASSWORD "A4h9&c8f1hwj3!n6d?"
+#define DEFAULT_GROUP_TITLE "ToxCon 2018"
 #define MAX_LOG_LINE_LENGTH 1000
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
@@ -66,7 +66,7 @@ const char *log_filename = "toxbot.log";
 char *DATA_FILE = "toxbot_save.dat";
 char *MASTERLIST_FILE = "masterkeys.txt";
 char *DEFAULT_GROUP_PASSWORD_FILE = "default_group_pass.txt";
-char *BOTNAME = "Skupina Robot";
+char *BOTNAME = "Skupina Robot [tc2018]";
 FILE *logfile = NULL;
 
 struct Tox_Bot Tox_Bot;
@@ -913,14 +913,21 @@ int main(int argc, char **argv)
 				}
 				else
 				{
-					dbg(0, "NOT group_peer_count < (numfriends + 1)");
+					// dbg(0, "NOT group_peer_count < (numfriends + 1)");
 				}
 			}
 		}
 		// check if we have lost a friend in the group ----------
 
         tox_iterate(m, NULL);
-        usleep(tox_iteration_interval(m) * 1000);
+        usleep(tox_iteration_interval(m) * 500);
+        
+        
+        // check if we lost connection to the Tox network
+        if (tox_self_get_connection_status(m) == TOX_CONNECTION_NONE)
+        {
+            bootstrap_DHT(m);
+        }
     }
 
     exit_toxbot(m);
