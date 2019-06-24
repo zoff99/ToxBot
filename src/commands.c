@@ -238,15 +238,6 @@ static void cmd_help(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMM
     outmsg = "id : Print my Tox ID";
     tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
 
-    outmsg = "invite : Request invite to default group chat";
-    tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
-
-    outmsg = "invite <n> <p> : Request invite to group chat n (with password p if protected)";
-    tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
-
-    outmsg = "group <type> <pass> : Creates a new groupchat with type: text | audio (optional password)";
-    tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
-
     if (friend_is_master(m, friendnum)) {
         outmsg = "For a list of master commands see the commands.txt file";
         tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
@@ -284,8 +275,8 @@ static void cmd_info(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMM
     snprintf(outmsg, sizeof(outmsg), "Friends: %d (%d online)", numfriends, Tox_Bot.num_online_friends);
     tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
 
-    snprintf(outmsg, sizeof(outmsg), "Inactive friends are purged after %"PRIu64" days",
-                                      Tox_Bot.inactive_limit / SECONDS_IN_DAY);
+    snprintf(outmsg, sizeof(outmsg), "Inactive friends are purged after %"PRIu64" seconds offline",
+                                      Tox_Bot.inactive_limit);
     tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
 
     /* List active group chats and number of peers in each */
@@ -838,21 +829,21 @@ static struct {
     const char *name;
     void (*func)(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_LENGTH]);
 } commands[] = {
-    { "default",          cmd_default       },
-    { "group",            cmd_group         },
-    { "gmessage",         cmd_gmessage      },
+    { "default",          cmd_help       },
+    //{ "group",            cmd_group         },
+    //{ "gmessage",         cmd_gmessage      },
     { "help",             cmd_help          },
     { "id",               cmd_id            },
     { "info",             cmd_info          },
-    { "invite",           cmd_invite        },
-    { "leave",            cmd_leave         },
-    { "master",           cmd_master        },
-    { "name",             cmd_name          },
-    { "passwd",           cmd_passwd        },
-    { "purge",            cmd_purge         },
-    { "status",           cmd_status        },
-    { "statusmessage",    cmd_statusmessage },
-    { "title",            cmd_title_set     },
+    //{ "invite",           cmd_invite        },
+    //{ "leave",            cmd_leave         },
+    //{ "master",           cmd_master        },
+    //{ "name",             cmd_name          },
+    //{ "passwd",           cmd_passwd        },
+    //{ "purge",            cmd_purge         },
+    //{ "status",           cmd_status        },
+    //{ "statusmessage",    cmd_statusmessage },
+    //{ "title",            cmd_title_set     },
     { NULL,               NULL              },
 };
 

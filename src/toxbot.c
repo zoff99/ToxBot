@@ -3,7 +3,7 @@
  *
  * skupina robot
  *
- * Copyright (C) 2017 by Zoff
+ * Copyright (C) 2017 - 2019 by Zoff
  *
  */
 
@@ -54,11 +54,11 @@
 #include "toxbot.h"
 #include "groupchats.h"
 
-#define VERSION "0.99.3"
-#define FRIEND_PURGE_INTERVAL 1728000 /* 20 days */
+#define VERSION "0.99.5"
+#define FRIEND_PURGE_INTERVAL 1728 /* very often */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
-#define DEFAULT_GROUP_PASSWORD "A4h9&c8f1hwj3!n6d?"
-#define DEFAULT_GROUP_TITLE "ToxCon 2018"
+#define DEFAULT_GROUP_PASSWORD "not-used-anymore-734hfdo!383wl?r3ewr$9ia3wR"
+#define DEFAULT_GROUP_TITLE "ToxCon - GroupChat"
 #define MAX_LOG_LINE_LENGTH 1000
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
@@ -66,7 +66,7 @@ const char *log_filename = "toxbot.log";
 char *DATA_FILE = "toxbot_save.dat";
 char *MASTERLIST_FILE = "masterkeys.txt";
 char *DEFAULT_GROUP_PASSWORD_FILE = "default_group_pass.txt";
-char *BOTNAME = "Skupina Robot [tc2018]";
+char *BOTNAME = "Skupina Robot [ToxCon]";
 FILE *logfile = NULL;
 
 struct Tox_Bot Tox_Bot;
@@ -79,7 +79,7 @@ static void init_toxbot_state(void)
     Tox_Bot.num_online_friends = 0;
 
     /* 1 year default; anything lower should be explicitly set until we have a config file */
-    Tox_Bot.inactive_limit = 31536000;
+    Tox_Bot.inactive_limit = 120; // 120 seconds
 }
 
 static void catch_SIGINT(int sig)
@@ -183,43 +183,29 @@ void tox_log_cb__custom(Tox *tox, TOX_LOG_LEVEL level, const char *file, uint32_
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
+static void invite_friendnum_to_groupchat(Tox *tox, uint32_t friend_number)
+{
+    TOX_ERR_CONFERENCE_INVITE error;
+    bool res = tox_conference_invite(tox, friend_number, 0, &error);
+
+}
+
 void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber, int silent)
 {
-	// dbg(2, "friend invite to default group fnum=%d", (int)friendnumber);
+	dbg(2, "friend invite to default group fnum=%d", (int)friendnumber);
 
-	const char *password = DEFAULT_GROUP_PASSWORD;
-	batch_invite(m, friendnumber, password, silent);
+	// const char *password = DEFAULT_GROUP_PASSWORD;
+	// batch_invite(m, friendnumber, password, silent);
+    invite_friendnum_to_groupchat(m, friendnumber);
 }
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
 // --- autoinvite friend to default group ---
 
-
-static void exit_groupchats(Tox *m, size_t numchats)
-{
-    memset(Tox_Bot.g_chats, 0, Tox_Bot.chats_idx * sizeof(struct Group_Chat));
-    realloc_groupchats(0);
-
-    uint32_t chatlist[numchats];
-    tox_conference_get_chatlist(m, chatlist);
-
-    size_t i;
-
-    for (i = 0; i < numchats; ++i)
-	{
-        tox_conference_delete(m, chatlist[i], NULL);
-		dbg(2, "group removed [1] gnum=%d", (int)chatlist[i]);
-    }
-}
 
 static void exit_toxbot(Tox *m)
 {
     size_t numchats = tox_conference_get_chatlist_size(m);
-
-    if (numchats)
-	{
-        exit_groupchats(m, numchats);
-    }
 
     save_data(m, DATA_FILE);
     tox_kill(m);
@@ -391,6 +377,12 @@ static void cb_friend_message(Tox *m, uint32_t friendnumber, TOX_MESSAGE_TYPE ty
     }
 }
 
+static void cb_group_connected(Tox *tox, uint32_t conference_number, void *user_data)
+{
+    // TODO: write me
+    // dummy for now
+}
+
 static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE type,
                             const uint8_t *cookie, size_t length, void *userdata)
 {
@@ -414,12 +406,14 @@ static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE t
             goto on_error;
         }
     } else if (type == TOX_CONFERENCE_TYPE_AV) {
-        groupnum = toxav_join_av_groupchat(m, friendnumber, cookie, length, NULL, NULL);
+        //groupnum = toxav_join_av_groupchat(m, friendnumber, cookie, length, NULL, NULL);
 
-        if (groupnum == -1) {
+        //if (groupnum == -1) {
             goto on_error;
-        }
+        //}
     }
+
+    save_data(m, DATA_FILE);
 
     if (group_add(groupnum, type, NULL) == -1)
 	{
@@ -434,6 +428,8 @@ static void cb_group_invite(Tox *m, uint32_t friendnumber, TOX_CONFERENCE_TYPE t
 
 on_error:
     dbg(0, "Invite from %s failed (core failure)", name);
+    save_data(m, DATA_FILE);
+
 }
 
 static void cb_group_titlechange(Tox *m, uint32_t groupnumber, uint32_t peernumber, const uint8_t *title,
@@ -449,6 +445,9 @@ static void cb_group_titlechange(Tox *m, uint32_t groupnumber, uint32_t peernumb
 
     memcpy(Tox_Bot.g_chats[idx].title, message, length + 1);
     Tox_Bot.g_chats[idx].title_len = length;
+
+    save_data(m, DATA_FILE);
+
 }
 /* END CALLBACKS */
 
@@ -554,6 +553,8 @@ static Tox *init_tox(void)
     tox_callback_friend_message(m, cb_friend_message);
     tox_callback_conference_invite(m, cb_group_invite);
     tox_callback_conference_title(m, cb_group_titlechange);
+    tox_callback_conference_connected(m, cb_group_connected);
+
 
     size_t s_len = tox_self_get_status_message_size(m);
 
@@ -637,7 +638,7 @@ static void print_profile_info(Tox *m)
     size_t numfriends = tox_self_get_friend_list_size(m);
     dbg(2, "Name: %s", name);
     dbg(2, "Contacts: %d", (int) numfriends);
-    dbg(2, "Inactive contacts purged after %"PRIu64" days", Tox_Bot.inactive_limit / SECONDS_IN_DAY);
+    dbg(2, "Inactive contacts purged after %"PRIu64" seconds offline", Tox_Bot.inactive_limit);
 }
 
 static void purge_inactive_friends(Tox *m)
@@ -667,82 +668,6 @@ static void purge_inactive_friends(Tox *m)
         if (((uint64_t) time(NULL)) - last_online > Tox_Bot.inactive_limit)
             tox_friend_delete(m, friendnum, NULL);
     }
-}
-
-#if 0
-static void purge_empty_groups(Tox *m)
-{
-    uint32_t i;
-
-    for (i = 0; i < Tox_Bot.chats_idx; ++i) {
-        if (!Tox_Bot.g_chats[i].active)
-            continue;
-
-        TOX_ERR_CONFERENCE_PEER_QUERY err;
-        uint32_t num_peers = tox_conference_peer_count(m, Tox_Bot.g_chats[i].groupnum, &err);
-
-        if (err != TOX_ERR_CONFERENCE_PEER_QUERY_OK || num_peers <= 1) {
-            dbg(2, "Deleting empty group %i", Tox_Bot.g_chats[i].groupnum);
-            tox_conference_delete(m, Tox_Bot.g_chats[i].groupnum, NULL);
-			dbg(2, "group removed [3] gnum=%d", (int)Tox_Bot.g_chats[i].groupnum);
-            group_leave(i);
-
-            if (i >= Tox_Bot.chats_idx) {   // group_leave modifies chats_idx
-                return;
-            }
-        }
-    }
-}
-#endif
-
-void create_default_group(Tox *m)
-{
-	uint8_t type = TOX_CONFERENCE_TYPE_TEXT;
-	uint32_t groupnum = -1;
-
-	TOX_ERR_CONFERENCE_NEW err;
-	groupnum = tox_conference_new(m, &err);
-
-	if (err != TOX_ERR_CONFERENCE_NEW_OK)
-	{
-		dbg(2, "Default group chat creation failed to initialize, error=%d", err);
-		return;
-	}
-
-	const char *password = DEFAULT_GROUP_PASSWORD;
-
-	if (password && strlen(password) >= MAX_PASSWORD_SIZE)
-	{
-		dbg(2, "Default group chat creation failed: Password too long");
-        return;
-	}
-
-	if (group_add((int)groupnum, type, password) == -1)
-	{
-		dbg(2, "Default group chat creation by failed");
-		tox_conference_delete(m, groupnum, NULL);
-		dbg(2, "group removed [4] gnum=%d", (int)groupnum);
-		return;
-    }
-
-	TOX_ERR_CONFERENCE_TITLE error2;
-	/* bool res = */ tox_conference_set_title(m, groupnum, (uint8_t *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE), &error2);
-
-	// - save group title -
-	char new_group_title[TOX_MAX_MESSAGE_LENGTH];
-    size_t length = copy_tox_str(new_group_title, sizeof(new_group_title), (const char *)DEFAULT_GROUP_TITLE, strlen((char *)DEFAULT_GROUP_TITLE));
-    int idx = group_index(groupnum);
-    if (idx == -1)
-	{
-		return;
-	}
-
-    memcpy(Tox_Bot.g_chats[idx].title, new_group_title, length + 1);
-    Tox_Bot.g_chats[idx].title_len = length;
-	// - save group title -
-
-	const char *pw = password ? " (Password protected)" : "";
-	dbg(2, "Default group chat %d created%s", groupnum, pw);
 }
 
 int main(int argc, char **argv)
@@ -795,7 +720,7 @@ int main(int argc, char **argv)
 
 	// -- wait 3 seconds before creating default group --
 	c_sleep(3 * 1000);
-	create_default_group(m);
+	// create_default_group(m);
 
 	uint64_t cur_time = (uint64_t) time(NULL);
     uint64_t last_friend_purge = cur_time;
@@ -810,119 +735,9 @@ int main(int argc, char **argv)
             last_friend_purge = cur_time;
         }
 
-        if (timed_out(last_group_purge, cur_time, GROUP_PURGE_INTERVAL))
-		{
-            // purge_empty_groups(m);
-            last_group_purge = cur_time;
-        }
-
-		// check if we have lost a friend in the group ----------
-		size_t numfriends = tox_self_get_friend_list_size(m);
-
-		if (numfriends > 0)
-		{
-			// dbg(9, "\n");
-			// dbg(9, "==========================================================\n");
-			// dbg(9, "==========================================================\n");
-			// dbg(9, "numfriends=%d\n", (int)numfriends);
-			
-			uint32_t friend_list[numfriends];
-			tox_self_get_friend_list(m, friend_list);
-
-			int groupnum = Tox_Bot.default_groupnum;
-			int idx = group_index(groupnum);
-
-			if (idx == -1)
-			{
-				// dbg(9, "Default Group doesn't exist.\n");
-			}
-			else
-			{
-				TOX_ERR_CONFERENCE_PEER_QUERY error2;
-				uint32_t group_peer_count = tox_conference_peer_count(m, (uint32_t)idx, &error2);
-				// dbg(0, "group_peer_count=%d groupnum=%d", (int)group_peer_count, (int)idx);
-
-				if (group_peer_count < (numfriends + 1))
-				{
-					// dbg(0, "group_peer_count < (numfriends + 1)");
-
-					size_t i;
-					for (i = 0; i < numfriends; i++)
-					{
-						uint32_t friendnum = friend_list[i];
-						// dbg(0, "checking tox_friend=%d", (int)friendnum);
-						if (!tox_friend_exists(m, friendnum))
-						{
-							// dbg(0, "!tox_friend_exists=%d", (int)friendnum);
-							continue;
-						}
-						else
-						{
-							if (tox_friend_get_connection_status(m, (uint32_t)friendnum, NULL) != TOX_CONNECTION_NONE)
-							{
-								// dbg(0, "friend online=%d", (int)friendnum);
-
-								char friend_key[TOX_PUBLIC_KEY_SIZE];
-								TOX_ERR_FRIEND_GET_PUBLIC_KEY error3;
-								if (tox_friend_get_public_key(m, (uint32_t)friendnum, (uint8_t *)friend_key, &error3) != 0)
-								{
-									// dbg(0, "friend tox_friend_get_public_key:OK");
-
-									int found = 0;
-									size_t group_peer_num;
-									for (group_peer_num = 0; group_peer_num < group_peer_count; group_peer_num++)
-									{
-										// dbg(0, "group_peer_num=%d", (int)group_peer_num);
-
-										char group_peer_key[TOX_PUBLIC_KEY_SIZE];
-										TOX_ERR_CONFERENCE_PEER_QUERY error4;
-										tox_conference_peer_get_public_key(m, (uint32_t)idx, (uint32_t)group_peer_num, (uint8_t*)group_peer_key, &error4);
-
-										if (strncmp(friend_key, group_peer_key, (size_t)TOX_PUBLIC_KEY_SIZE) == 0)
-										{
-											// matched friend with group peer
-											found = 1;
-
-											// dbg(0, "friend_key == group_peer_key");
-											break;
-										}
-									}
-
-									if (found == 0)
-									{
-										// we lost the peer, invite again to group
-										// ** // dbg(0, "We lost peer %d in Group", (int)friendnum);
-										autoinvite_friendnum_to_default_group(m, friendnum, 1);
-									}
-									else
-									{
-										// dbg(0, "all OK");
-									}
-								}
-								else
-								{
-									// dbg(9, "friend tox_friend_get_public_key:ERR:%d", (int)error3);
-								}
-							}
-							else
-							{
-								// dbg(9, "friend tox_friend_get_connection_status:ERR");
-							}
-						}
-					}
-				}
-				else
-				{
-					// dbg(0, "NOT group_peer_count < (numfriends + 1)");
-				}
-			}
-		}
-		// check if we have lost a friend in the group ----------
-
         tox_iterate(m, NULL);
         usleep(tox_iteration_interval(m) * 500);
-        
-        
+
         // check if we lost connection to the Tox network
         if (tox_self_get_connection_status(m) == TOX_CONNECTION_NONE)
         {
