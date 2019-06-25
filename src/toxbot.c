@@ -638,7 +638,7 @@ static void print_profile_info(Tox *m)
     size_t numfriends = tox_self_get_friend_list_size(m);
     dbg(2, "Name: %s", name);
     dbg(2, "Contacts: %d", (int) numfriends);
-    dbg(2, "Inactive contacts purged after %"PRIu64" seconds offline", Tox_Bot.inactive_limit);
+    // dbg(2, "Inactive contacts purged after %"PRIu64" seconds offline", Tox_Bot.inactive_limit);
 }
 
 static void purge_inactive_friends(Tox *m)
@@ -728,13 +728,14 @@ int main(int argc, char **argv)
 
     while (!FLAG_EXIT)
 	{
+#if 0
         if (timed_out(last_friend_purge, cur_time, FRIEND_PURGE_INTERVAL))
 		{
             purge_inactive_friends(m);
             save_data(m, DATA_FILE);
             last_friend_purge = cur_time;
         }
-
+#endif
         tox_iterate(m, NULL);
         usleep(tox_iteration_interval(m) * 500);
 

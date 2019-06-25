@@ -286,28 +286,6 @@ static void cmd_info(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMM
         tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) "No active groupchats", strlen("No active groupchats"), NULL);
         return;
     }
-
-    uint32_t groupchat_list[num_chats];
-
-    tox_conference_get_chatlist(m, groupchat_list);
-
-    uint32_t i;
-
-    for (i = 0; i < num_chats; ++i) {
-        TOX_ERR_CONFERENCE_PEER_QUERY err;
-        uint32_t groupnum = groupchat_list[i];
-        uint32_t num_peers = tox_conference_peer_count(m, groupnum, &err);
-
-        if (err == TOX_ERR_CONFERENCE_PEER_QUERY_OK) {
-            int idx = group_index(groupnum);
-            const char *title = Tox_Bot.g_chats[idx].title_len
-                              ? Tox_Bot.g_chats[idx].title : "None";
-            const char *type = tox_conference_get_type(m, groupnum, NULL) == TOX_CONFERENCE_TYPE_AV ? "Audio" : "Text";
-            snprintf(outmsg, sizeof(outmsg), "Group %d | %s | peers: %d | Title: %s", groupnum, type,
-                                                                                      num_peers, title);
-            tox_friend_send_message(m, friendnum, TOX_MESSAGE_TYPE_NORMAL, (uint8_t *) outmsg, strlen(outmsg), NULL);
-        }
-    }
 }
 
 void cmd_invite(Tox *m, uint32_t friendnum, int argc, char (*argv)[MAX_COMMAND_LENGTH])
