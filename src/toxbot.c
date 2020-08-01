@@ -55,10 +55,10 @@
 #include "groupchats.h"
 
 #define VERSION "0.99.7"
-#define FRIEND_PURGE_INTERVAL (60 * 60) /* very often */
+#define FRIEND_PURGE_INTERVAL (60) /* very often */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 #define DEFAULT_GROUP_PASSWORD "not-used-anymore-734hfdo!383wl?r3ewr$9ia3wR"
-#define DEFAULT_GROUP_TITLE "Toktok - PublicGroupChat"
+#define DEFAULT_GROUP_TITLE "[Toktok] PublicChat"
 #define MAX_LOG_LINE_LENGTH 1000
 
 bool FLAG_EXIT = false;    /* set on SIGINT */
@@ -193,7 +193,7 @@ static void invite_friendnum_to_groupchat(Tox *tox, uint32_t friend_number)
 
 void autoinvite_friendnum_to_default_group(Tox *m, uint32_t friendnumber, int silent)
 {
-	dbg(2, "friend invite to default group fnum=%d", (int)friendnumber);
+	// dbg(2, "friend invite to default group fnum=%d", (int)friendnumber);
 
 	// const char *password = DEFAULT_GROUP_PASSWORD;
 	// batch_invite(m, friendnumber, password, silent);
@@ -299,7 +299,7 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
      * the number of online friends has mysteriously vanished
      */
 
-	dbg(2, "friend connection change fnum=%d stats=%d", (int)friendnumber, (int)connection_status);
+	// dbg(2, "friend connection change fnum=%d stats=%d", (int)friendnumber, (int)connection_status);
 
 	int online_friends_previous = (int)Tox_Bot.num_online_friends;
 
@@ -323,7 +323,7 @@ static void cb_friend_connection_change(Tox *m, uint32_t friendnumber, TOX_CONNE
 		}
     }
 
-	dbg(2, "friend connection change fnum=%d online friends prev=%d online friends now=%d", (int)friendnumber, (int)online_friends_previous, (int)Tox_Bot.num_online_friends);
+	// dbg(2, "friend connection change fnum=%d online friends prev=%d online friends now=%d", (int)friendnumber, (int)online_friends_previous, (int)Tox_Bot.num_online_friends);
 
     if (connection_status != TOX_CONNECTION_NONE)
     {
@@ -689,7 +689,6 @@ static void print_profile_info(Tox *m)
     TOX_ERR_CONFERENCE_PEER_QUERY error;
     uint32_t group_members = tox_conference_peer_count(m, 0, &error);
 
-    
     dbg(2, "Inactive contacts purged after %"PRIu64" seconds offline", Tox_Bot.inactive_limit);
 }
 
@@ -698,27 +697,40 @@ static void purge_inactive_friends(Tox *m)
     size_t numfriends = tox_self_get_friend_list_size(m);
 
     if (numfriends == 0)
+    {
         return;
+    }
 
-    uint32_t friend_list[numfriends];
+    uint32_t *friend_list = calloc(1, numfriends * sizeof(uint32_t));
     tox_self_get_friend_list(m, friend_list);
 
-    size_t i;
+    dbg(2, "numfriends=%d", numfriends);
 
-    for (i = 0; i < numfriends; ++i) {
+    size_t i;
+    for (i = 0; i < numfriends; ++i)
+    {
         uint32_t friendnum = friend_list[i];
 
         if (!tox_friend_exists(m, friendnum))
+        {
             continue;
+        }
 
         TOX_ERR_FRIEND_GET_LAST_ONLINE err;
         uint64_t last_online = tox_friend_get_last_online(m, friendnum, &err);
 
         if (err != TOX_ERR_FRIEND_GET_LAST_ONLINE_OK)
+        {
             continue;
+        }
+
+        // dbg(2, "deleting friend: time=%d last_online=%d limit=%d : fnum=%d", (int) time(NULL), (int)last_online, (int)Tox_Bot.inactive_limit, friendnum);
 
         if (((uint64_t) time(NULL)) - last_online > Tox_Bot.inactive_limit)
+        {
+            dbg(2, "deleting friend %d", friendnum);
             tox_friend_delete(m, friendnum, NULL);
+        }
     }
 }
 
@@ -781,6 +793,10 @@ int main(int argc, char **argv)
     TOX_ERR_CONFERENCE_SET_MAX_OFFLINE error;
     tox_conference_set_max_offline(m, 0, 100, &error);
 
+    dbg(1, "set title ...");
+    tox_conference_set_title(m, 0, (const uint8_t *)(DEFAULT_GROUP_TITLE), (size_t)(strlen(DEFAULT_GROUP_TITLE)), NULL);
+    dbg(1, "set title ... DONE");
+
 	int ease_off = 0;
 	int max_ease_off = 20;
     while (!FLAG_EXIT)
@@ -788,7 +804,9 @@ int main(int argc, char **argv)
 
         uint64_t cur_time = (uint64_t) time(NULL);
 
-        if (timed_out(last_friend_purge, cur_time, FRIEND_PURGE_INTERVAL)) {
+        if (timed_out(last_friend_purge, cur_time, FRIEND_PURGE_INTERVAL))
+        {
+            // dbg(1, "purging friends ...");
             purge_inactive_friends(m);
             save_data(m, DATA_FILE);
             last_friend_purge = cur_time;
@@ -817,7 +835,7 @@ int main(int argc, char **argv)
 
         if (global_change_title_back == 1)
         {
-            if (bool tox_conference_set_title(m, 0, (const uint8_t *)(DEFAULT_GROUP_TITLE), (size_t)(strlen(DEFAULT_GROUP_TITLE)), NULL))
+            if (tox_conference_set_title(m, 0, (const uint8_t *)(DEFAULT_GROUP_TITLE), (size_t)(strlen(DEFAULT_GROUP_TITLE)), NULL))
             {
                 global_change_title_back = 0;
                 dbg(1, "changing title back again");
