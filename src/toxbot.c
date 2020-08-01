@@ -3,7 +3,7 @@
  *
  * skupina robot
  *
- * Copyright (C) 2017 - 2019 by Zoff
+ * Copyright (C) 2017 - 2020 by Zoff
  *
  */
 
@@ -54,7 +54,7 @@
 #include "toxbot.h"
 #include "groupchats.h"
 
-#define VERSION "0.99.6"
+#define VERSION "0.99.7"
 #define FRIEND_PURGE_INTERVAL (60 * 60) /* very often */
 #define GROUP_PURGE_INTERVAL 1728000 /* 20 days */
 #define DEFAULT_GROUP_PASSWORD "not-used-anymore-734hfdo!383wl?r3ewr$9ia3wR"
@@ -68,6 +68,7 @@ char *MASTERLIST_FILE = "masterkeys.txt";
 char *DEFAULT_GROUP_PASSWORD_FILE = "default_group_pass.txt";
 char *BOTNAME = "Skupina Robot [Toktok]";
 FILE *logfile = NULL;
+int global_change_title_back = 0;
 
 struct Tox_Bot Tox_Bot;
 
@@ -435,19 +436,24 @@ on_error:
 static void cb_group_titlechange(Tox *m, uint32_t groupnumber, uint32_t peernumber, const uint8_t *title,
                                  size_t length, void *userdata)
 {
+    global_change_title_back = 1;
+
     char message[TOX_MAX_MESSAGE_LENGTH];
     length = copy_tox_str(message, sizeof(message), (const char *) title, length);
 
     int idx = group_index(groupnumber);
 
     if (idx == -1)
+    {
         return;
+    }
 
     memcpy(Tox_Bot.g_chats[idx].title, message, length + 1);
     Tox_Bot.g_chats[idx].title_len = length;
 
     save_data(m, DATA_FILE);
 
+    dbg(2, "somebody changed the group title");
 }
 /* END CALLBACKS */
 
@@ -572,7 +578,8 @@ static Tox *init_tox(void)
 
     size_t s_len = tox_self_get_status_message_size(m);
 
-    if (s_len == 0) {
+    if (s_len == 0)
+    {
         const char *statusmsg = "Send me the the command 'help' for more info";
         tox_self_set_status_message(m, (uint8_t *) statusmsg, strlen(statusmsg), NULL);
     }
@@ -580,7 +587,9 @@ static Tox *init_tox(void)
     size_t n_len = tox_self_get_name_size(m);
 
     if (n_len == 0)
+    {
         tox_self_set_name(m, (uint8_t *) BOTNAME, strlen(BOTNAME), NULL);
+    }
 
     return m;
 }
@@ -769,8 +778,8 @@ int main(int argc, char **argv)
     uint64_t last_friend_purge = cur_time;
     uint64_t last_group_purge = cur_time;
 
-        TOX_ERR_CONFERENCE_SET_MAX_OFFLINE error;
-        tox_conference_set_max_offline(m, 0, 100, &error);
+    TOX_ERR_CONFERENCE_SET_MAX_OFFLINE error;
+    tox_conference_set_max_offline(m, 0, 100, &error);
 
 	int ease_off = 0;
 	int max_ease_off = 20;
@@ -791,19 +800,29 @@ int main(int argc, char **argv)
         // check if we lost connection to the Tox network
         if (tox_self_get_connection_status(m) == TOX_CONNECTION_NONE)
         {
-		if (ease_off == 0)
-		{
-           		bootstrap_DHT(m);
-			ease_off++;
-		}
-		else
-		{
-			ease_off++;
-			if (ease_off > max_ease_off)
-			{
-				ease_off = 0;
-			}
-		}
+            if (ease_off == 0)
+            {
+                bootstrap_DHT(m);
+                ease_off++;
+            }
+            else
+            {
+                ease_off++;
+                if (ease_off > max_ease_off)
+                {
+                    ease_off = 0;
+                }
+            }
+        }
+
+        if (global_change_title_back == 1)
+        {
+            if (bool tox_conference_set_title(m, 0, (const uint8_t *)(DEFAULT_GROUP_TITLE), (size_t)(strlen(DEFAULT_GROUP_TITLE)), NULL))
+            {
+                global_change_title_back = 0;
+                dbg(1, "changing title back again");
+                save_data(m, DATA_FILE);
+            }
         }
     }
 
