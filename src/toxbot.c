@@ -704,7 +704,7 @@ static void purge_inactive_friends(Tox *m)
     uint32_t *friend_list = calloc(1, numfriends * sizeof(uint32_t));
     tox_self_get_friend_list(m, friend_list);
 
-    dbg(2, "numfriends=%d", numfriends);
+    // dbg(2, "numfriends=%d", numfriends);
 
     size_t i;
     for (i = 0; i < numfriends; ++i)
